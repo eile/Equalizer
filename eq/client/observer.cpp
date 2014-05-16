@@ -35,8 +35,6 @@
 #  include <co/buffer.h>
 #else
    class vrpn_Tracker_Remote;
-   typedef int32_t vrpn_int32;
-   typedef double vrpn_float64;
 #endif
 
 #include <limits>
@@ -51,6 +49,92 @@
 
 namespace eq
 {
+
+namespace detail
+{
+class CVTracker;
+
+class Observer
+{
+public:
+    Observer(eq::Observer *o)
+        : observer(o)
+        , vrpnTracker( nullptr )
+        , _trackerSensorID( _useLowestValidSensorID )
+        , _lowestSeenSensorID( _maxSensorID )
+        , cvTracker( nullptr )
+    {}
+
+    eq::Observer *observer;
+
+    vrpn_Tracker_Remote *vrpnTracker;
+    int32_t _trackerSensorID;
+    int32_t _lowestSeenSensorID;
+
+    CVTracker* cvTracker;
+
+#ifdef EQUALIZER_USE_VRPN
+    /** Test if tracker data is for the observed sensor of interest. */
+    bool canUseSensor(const vrpn_TRACKERCB &data)
+    {
+#  ifdef DEBUG_TRACKER
+        LBINFO << "Eq::Observer Sensor " << data.sensor << ", position ("
+               << data.pos[0] << ", " << data.pos[1] << "," << data.pos[2]
+               << "), orientation (" << data.quat[0] << "," << data.quat[1]
+               << "," << data.quat[2] << "," << data.quat[3] << ")"
+               << std::endl;
+#  endif
+
+        if( _trackerSensorID == _useLowestValidSensorID )
+        {
+            if( data.sensor > _lowestSeenSensorID )
+                return false;
+
+            if (data.sensor < _lowestSeenSensorID)
+                _lowestSeenSensorID = data.sensor;
+        }
+        else if (_trackerSensorID != _useAnyValidSensorID &&
+                 _trackerSensorID != data.sensor)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /** Callback function to call by VRPN when the tracker's position is updated. */
+    static void VRPN_CALLBACK trackerCallback( void *userData,
+                                               const vrpn_TRACKERCB data );
+#endif
+
+    static int32_t _maxSensorID;
+    static int32_t _useLowestValidSensorID;
+    static int32_t _useAnyValidSensorID;
+};
+
+int32_t Observer::_maxSensorID = std::numeric_limits< int32_t >::max();
+int32_t Observer::_useLowestValidSensorID = std::numeric_limits< int32_t >::max();
+int32_t Observer::_useAnyValidSensorID = std::numeric_limits< int32_t >::max() - 1;
+}
+
+typedef fabric::Observer< Config, Observer > Super;
+
+Observer::Observer( Config* parent )
+        : Super( parent )
+        , _impl( new detail::Observer( this ))
+{}
+
+Observer::~Observer()
+{
+    delete _impl;
+}
+
+ServerPtr Observer::getServer()
+{
+    Config* config = getConfig();
+    LBASSERT( config );
+    return ( config ? config->getServer() : 0 );
+}
 
 #ifdef EQUALIZER_USE_VRPN
 namespace
@@ -71,84 +155,11 @@ public:
     EventOCommand command;
 };
 }
-#endif
 
-namespace detail
+void VRPN_CALLBACK detail::Observer::trackerCallback( void* userData,
+                                                     const vrpn_TRACKERCB data )
 {
-class CVTracker;
-
-class Observer
-{
-public:
-    Observer(eq::Observer *o);
-
-    eq::Observer *observer;
-
-    vrpn_Tracker_Remote *vrpnTracker;
-    vrpn_int32 _trackerSensorID;
-    vrpn_int32 _lowestSeenSensorID;
-
-    CVTracker* cvTracker;
-
-#ifdef EQUALIZER_USE_VRPN
-    /** Test if tracker data is for the observed sensor of interest. */
-    bool canUseSensor(const vrpn_TRACKERCB &data);
-
-    /** Callback function to call by VRPN when the tracker's position is updated. */
-    static void VRPN_CALLBACK trackerCallback(void *userData, const vrpn_TRACKERCB data);
-#endif
-
-    static vrpn_int32 k_MaxSensorID;
-    static vrpn_int32 k_UseLowestValidSensorID;
-    static vrpn_int32 k_UseAnyValidSensorID;
-};
-
-vrpn_int32 Observer::k_MaxSensorID = std::numeric_limits<vrpn_int32>::max();
-vrpn_int32 Observer::k_UseLowestValidSensorID = std::numeric_limits<vrpn_int32>::max();
-vrpn_int32 Observer::k_UseAnyValidSensorID = std::numeric_limits<vrpn_int32>::max() - 1;
-
-Observer::Observer(eq::Observer *o) :
-      observer(o)
-    , vrpnTracker( nullptr )
-    , _trackerSensorID( k_UseLowestValidSensorID )
-    , _lowestSeenSensorID( k_MaxSensorID )
-    , cvTracker( nullptr )
-{
-}
-
-#ifdef EQUALIZER_USE_VRPN
-
-bool Observer::canUseSensor(const vrpn_TRACKERCB &data)
-{
-#ifdef DEBUG_TRACKER
-    std::cout << "Eq::Observer Sensor " << data.sensor << ", position ("
-              << data.pos[0] << ", " << data.pos[1] << "," << data.pos[2]
-              << "), orientation (" << data.quat[0] << "," << data.quat[1]
-              << "," << data.quat[2] << "," << data.quat[3] << ")" << std::endl;
-#endif
-
-    if (_trackerSensorID == k_UseLowestValidSensorID)
-    {
-        if( data.sensor > _lowestSeenSensorID)
-            return false;
-
-        if (data.sensor < _lowestSeenSensorID)
-        {
-            _lowestSeenSensorID = data.sensor;
-        }
-    }
-    else if (_trackerSensorID != k_UseAnyValidSensorID &&
-             _trackerSensorID != data.sensor)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-void VRPN_CALLBACK Observer::trackerCallback( void* userData, const vrpn_TRACKERCB data )
-{
-    Observer *tracker = static_cast<Observer*>(userData);
+    detail::Observer *tracker = static_cast<Observer*>(userData);
 
     if (!tracker->canUseSensor(data))
         return;
@@ -166,7 +177,7 @@ void VRPN_CALLBACK Observer::trackerCallback( void* userData, const vrpn_TRACKER
     oEvent.command << observer->getID() << head;
     oEvent.command.disable();
 
-    eq::ClientPtr client = config->getClient();
+    ClientPtr client = config->getClient();
     co::Buffer buffer;
     buffer.swap( oEvent.buffer->getBuffer( ));
 
@@ -176,26 +187,6 @@ void VRPN_CALLBACK Observer::trackerCallback( void* userData, const vrpn_TRACKER
     observer->handleEvent( iEvent );
 }
 #endif
-}
-
-typedef fabric::Observer< Config, Observer > Super;
-
-Observer::Observer( Config* parent )
-        : Super( parent )
-        , _impl( new detail::Observer(this) )
-{}
-
-Observer::~Observer()
-{
-    delete _impl;
-}
-
-ServerPtr Observer::getServer()
-{
-    Config* config = getConfig();
-    LBASSERT( config );
-    return ( config ? config->getServer() : 0 );
-}
 
 bool Observer::configInit()
 {
@@ -207,13 +198,13 @@ bool Observer::configInit()
         // <device_url> = ((<device_name>@<device_desc>)(&key-value)*
         // <device_name> = (non-space, non-@?/:;-symbols)+
         // <device_desc> = <ssep_word>@<ssep_word>[:<port>]
-        static const boost::regex k_deviceURL_re("^([^\\s@:;\\?&/]+@[^\\s@;\\?&/]+)(&\\w+\\-\\w+)?$");
-        static const boost::regex k_sensorid_re("^&sensorid\\-(\\w*)$");
+        static const boost::regex deviceURL_re("^([^\\s@:;\\?&/]+@[^\\s@;\\?&/]+)(&\\w+\\-\\w+)?$");
+        static const boost::regex sensorid_re("^&sensorid\\-(\\w*)$");
 
         std::string trackerDevName;
 
         boost::smatch device_url;
-        if (boost::regex_search(vrpnName, device_url, k_deviceURL_re))
+        if (boost::regex_search(vrpnName, device_url, deviceURL_re))
         {
     #ifdef DEBUG_TRACKER
             for (size_t i = 0; i < device_url.size(); ++i)
@@ -232,13 +223,13 @@ bool Observer::configInit()
                     continue;
 
                 boost::smatch option_result;
-                if (boost::regex_search(optionStr, option_result, k_sensorid_re))
+                if (boost::regex_search(optionStr, option_result, sensorid_re))
                 {
                     std::string optionValue(option_result.str(1));
                     std::transform(optionValue.begin(), optionValue.end(), optionValue.begin(), ::tolower);
 
                     if (optionValue == "any")
-                        _impl->_trackerSensorID = detail::Observer::k_UseAnyValidSensorID;
+                        _impl->_trackerSensorID = detail::Observer::_useAnyValidSensorID;
                     else
                         _impl->_trackerSensorID = atoi(optionValue.c_str());
                 }
