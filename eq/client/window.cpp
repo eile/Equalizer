@@ -287,9 +287,6 @@ bool Window::getRenderContext( const int32_t x, const int32_t y,
 void Window::setSharedContextWindow( const Window* sharedContextWindow )
 {
     _sharedContextWindow = sharedContextWindow;
-    const SystemWindow* sysWindow = sharedContextWindow ?
-                                    sharedContextWindow->getSystemWindow() : 0;
-    _getSettings().setSharedContextWindow( sysWindow );
 }
 
 const Window* Window::getSharedContextWindow() const
@@ -319,10 +316,6 @@ void Window::finish() const
 void Window::setSystemWindow( SystemWindow* window )
 {
     _systemWindow = window;
-
-    const SystemWindow* sysWindow = _sharedContextWindow ?
-                                    _sharedContextWindow->getSystemWindow() : 0;
-    _getSettings().setSharedContextWindow( sysWindow );
 
     if( !window )
         return;
@@ -393,8 +386,12 @@ bool Window::configInit( const uint128_t& initID )
 bool Window::configInitSystemWindow( const uint128_t& )
 {
     const Pipe* pipe = getPipe();
+    WindowSettings settings = getSettings();
+    const SystemWindow* sysWindow = _sharedContextWindow ?
+                                    _sharedContextWindow->getSystemWindow() : 0;
+    settings.setSharedContextWindow( sysWindow );
     SystemWindow* systemWindow =
-        pipe->getWindowSystem().createWindow( this, getSettings( ));
+        pipe->getWindowSystem().createWindow( this, settings );
 
     LBASSERT( systemWindow );
     if( !systemWindow->configInit( ))
