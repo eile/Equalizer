@@ -9,6 +9,9 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake
   ${PROJECT_SOURCE_DIR}/CMake/common)
 
 include(GitExternal)
+include(SubProject)
+add_git_subproject(vmmlib https://github.com/eile/vmmlib.git superproject)
+add_git_subproject(Collage https://github.com/eile/Collage.git superproject)
 
 set(LAST_RELEASE 1.6.0)
 set(VERSION_MAJOR "1")
@@ -17,11 +20,6 @@ set(VERSION_PATCH "3")
 set(VERSION_ABI 170)
 
 include(Common)
-include(Buildyard)
-
-if(BUILDYARD_STOP)
-  return()
-endif()
 
 option(EQUALIZER_USE_OSG "Test for OpenSceneGraph support" ON)
 option(EQUALIZER_USE_HWLOC "Test for hwloc support (experimental)" OFF)
@@ -31,8 +29,8 @@ option(EQUALIZER_BUILD_2_0_API
 
 mark_as_advanced(EQUALIZER_INSTALL_SERVER_HEADERS)
 
-set(DPUT_HOST ppa:bbp/ppa)
 set(GITTARGETS_RELEASE_BRANCH minor)
+set(DPUT_HOST ppa:bbp/ppa)
 
 set(COMMON_PROJECT_DOMAIN ch.eyescale)
 set(EQUALIZER_DESCRIPTION "Parallel rendering framework for the creation of
