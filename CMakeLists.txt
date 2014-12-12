@@ -10,10 +10,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake
 
 include(GitExternal)
 include(SubProject)
-add_git_subproject(vmmlib https://github.com/eile/vmmlib.git superproject)
-add_git_subproject(Collage https://github.com/eile/Collage.git superproject)
 
-set(LAST_RELEASE 1.6.0)
 set(VERSION_MAJOR "1")
 set(VERSION_MINOR "7")
 set(VERSION_PATCH "3")

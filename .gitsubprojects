@@ -1,0 +1,3 @@
+# -*- mode: cmake -*-
+git_subproject(vmmlib https://github.com/Eyescale/vmmlib.git 38185b4)
+git_subproject(Collage https://github.com/Eyescale/Collage.git 3c4dd90)
