@@ -48,27 +48,27 @@ namespace eq
             LBASSERT( owner );
             LBASSERT( owner->getID() != 0 );
             LBASSERT( owner->getSerial() != CO_INSTANCE_INVALID );
-            event.data.type                  = Event::STATISTIC;
-            event.data.serial                = owner->getSerial();
-            event.data.originator            = owner->getID();
-            event.data.statistic.type        = type;
-            event.data.statistic.frameNumber = frameNumber;
-            event.data.statistic.resourceName[0] = '\0';
-            event.data.statistic.startTime   = 0;
-            event.data.statistic.endTime     = 0;
+            event.type                  = Event::STATISTIC;
+            event.serial                = owner->getSerial();
+            event.originator            = owner->getID();
+            event.statistic.type        = type;
+            event.statistic.frameNumber = frameNumber;
+            event.statistic.resourceName[0] = '\0';
+            event.statistic.startTime   = 0;
+            event.statistic.endTime     = 0;
 
-            if( event.data.statistic.frameNumber == LB_UNDEFINED_UINT32 )
-                event.data.statistic.frameNumber = owner->getCurrentFrame();
+            if( event.statistic.frameNumber == LB_UNDEFINED_UINT32 )
+                event.statistic.frameNumber = owner->getCurrentFrame();
         }
 
         /** Destruct and finish statistics sampling. @version 1.0 */
         virtual ~StatisticSampler()
         {
-            LBASSERTINFO( event.data.statistic.startTime <=
-                          event.data.statistic.endTime, event.data.statistic );
+            LBASSERTINFO( event.statistic.startTime <=
+                          event.statistic.endTime, event.statistic );
         }
 
-        ConfigEvent event; //!< The statistics event.
+        Event event; //!< The statistics event.
 
     protected:
         Owner* const _owner;

@@ -38,32 +38,32 @@ NodeStatistics::NodeStatistics( const Statistic::Type type, Node* node,
 {
     const std::string& name = node->getName();
     if( name.empty( ))
-        snprintf( event.data.statistic.resourceName, 32, "Node %s",
+        snprintf( event.statistic.resourceName, 32, "Node %s",
                   node->getID().getShortString().c_str( ));
     else
-        snprintf( event.data.statistic.resourceName, 32, "%s", name.c_str( ));
+        snprintf( event.statistic.resourceName, 32, "%s", name.c_str( ));
 
-    event.data.statistic.resourceName[31] = 0;
+    event.statistic.resourceName[31] = 0;
 
     co::LocalNodePtr localNode = node->getLocalNode();
     LBASSERT( localNode );
     if( !localNode )
     {
-        event.data.statistic.frameNumber = 0;
+        event.statistic.frameNumber = 0;
         return;
     }
 
     Config* config = _owner->getConfig();
-    event.data.statistic.startTime = config->getTime();
+    event.statistic.startTime = config->getTime();
     LBASSERT( _owner->getID() != 0 );
-    event.data.originator = _owner->getID();
-    event.data.serial = _owner->getSerial();
+    event.originator = _owner->getID();
+    event.serial = _owner->getSerial();
 }
 
 
 NodeStatistics::~NodeStatistics()
 {
-    if( event.data.statistic.frameNumber == 0 ) // does not belong to a frame
+    if( event.statistic.frameNumber == 0 ) // does not belong to a frame
         return;
 
     co::LocalNodePtr localNode = _owner->getLocalNode();
@@ -72,10 +72,10 @@ NodeStatistics::~NodeStatistics()
         return;
 
     Config* config = _owner->getConfig();
-    event.data.statistic.endTime = config->getTime();
-    if( event.data.statistic.endTime <= event.data.statistic.startTime )
-        event.data.statistic.endTime = event.data.statistic.startTime + 1;
-    _owner->processEvent( event.data );
+    event.statistic.endTime = config->getTime();
+    if( event.statistic.endTime <= event.statistic.startTime )
+        event.statistic.endTime = event.statistic.startTime + 1;
+    _owner->processEvent( event );
 }
 
 }

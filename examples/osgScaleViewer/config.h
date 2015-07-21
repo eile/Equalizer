@@ -65,7 +65,7 @@ namespace osgScaleViewer
          * and mPointerYDiff, so that the new camera viewing direction can be
          * calculated in updateFrameData().
          */
-        virtual bool handleEvent( const eq::ConfigEvent* event );
+        virtual bool handleEvent( eq::EventICommand command );
 
         /**
          * Sets the InitData object.

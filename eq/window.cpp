@@ -166,8 +166,8 @@ void Window::_updateFPS()
     }
 
     WindowStatistics stat( Statistic::WINDOW_FPS, this );
-    stat.event.data.statistic.currentFPS = curFPS;
-    stat.event.data.statistic.averageFPS = _avgFPS;
+    stat.event.statistic.currentFPS = curFPS;
+    stat.event.statistic.averageFPS = _avgFPS;
 }
 
 
@@ -800,9 +800,7 @@ bool Window::processEvent( const Event& event )
     }
 
     Config* config = getConfig();
-    ConfigEvent configEvent;
-    configEvent.data = event;
-    config->sendEvent( configEvent );
+    config->sendEvent( event.type ) << event;
     return true;
 }
 

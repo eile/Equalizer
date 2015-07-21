@@ -1,7 +1,7 @@
 
-/* Copyright (c) 2006-2014, Stefan Eilemann <eile@equalizergraphics.com>
- *               2011-2012, Daniel Nachbaur <danielnachbaur@gmail.com>
- *                    2010, Cedric Stalder <cedric.stalder@gmail.com>
+/* Copyright (c) 2006-2015, Stefan Eilemann <eile@equalizergraphics.com>
+ *                          Daniel Nachbaur <danielnachbaur@gmail.com>
+ *                          Cedric Stalder <cedric.stalder@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -54,12 +54,12 @@ public:
     Config( eq::ServerPtr parent );
 
     /** @sa eq::Config::init. */
-    virtual bool init();
+    bool init();
     /** @sa eq::Config::exit. */
-    virtual bool exit();
+    bool exit() override;
 
     /** @sa eq::Config::startFrame. */
-    virtual uint32_t startFrame();
+    uint32_t startFrame();
 
     void setInitData( const LocalInitData& data ) { _initData = data; }
     const InitData& getInitData() const { return _initData; }
@@ -71,8 +71,7 @@ public:
     const Model* getModel( const eq::uint128_t& id );
 
     /** @sa eq::Config::handleEvent */
-    virtual bool handleEvent( const eq::ConfigEvent* event );
-    virtual bool handleEvent( eq::EventICommand command );
+    bool handleEvent( eq::EventICommand command ) override;
 
     /** @return true if the application is idling. */
     bool isIdleAA();
@@ -87,8 +86,8 @@ protected:
     virtual ~Config();
 
     /** Synchronize config and admin copy. */
-    virtual co::uint128_t sync(
-        const co::uint128_t& version = co::VERSION_HEAD );
+    co::uint128_t sync( const co::uint128_t& version = co::VERSION_HEAD )
+        override;
 
 private:
     int         _spinX, _spinY;

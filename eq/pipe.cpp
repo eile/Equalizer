@@ -1314,9 +1314,9 @@ bool Pipe::_cmdFrameStart( co::ICommand& cmd )
     if( lastFrameTime > 0 )
     {
         PipeStatistics waitEvent( Statistic::PIPE_IDLE, this );
-        waitEvent.event.data.statistic.idleTime =
+        waitEvent.event.statistic.idleTime =
             _impl->thread ? _impl->thread->getWorkerQueue()->resetWaitTime() :0;
-        waitEvent.event.data.statistic.totalTime =
+        waitEvent.event.statistic.totalTime =
             LB_MAX( _impl->frameTime - lastFrameTime, 1 ); // avoid SIGFPE
     }
 
