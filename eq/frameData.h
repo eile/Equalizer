@@ -1,6 +1,7 @@
 
 /* Copyright (c) 2006-2016, Stefan Eilemann <eile@equalizergraphics.com>
  *                          Daniel Nachbaur <danielnachbaur@gmail.com>
+ *                          Enrique <egparedes@ifi.uzh.ch>
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published
@@ -147,7 +148,7 @@ public:
      * @deprecated @sa startReadback()
      */
     void readback( const Frame& frame, util::ObjectManager& glObjects,
-                   const DrawableConfig& config );
+                   const DrawableConfig& config, const Range& range );
 #endif
 
     /**
@@ -166,7 +167,8 @@ public:
     Images startReadback( const Frame& frame,
                           util::ObjectManager& glObjects,
                           const DrawableConfig& config,
-                          const PixelViewports& regions );
+                          const PixelViewports& regions,
+                          const Range& range );
 
     /**
      * Set the frame data ready.
@@ -211,9 +213,9 @@ public:
 
     /** @internal */
     bool addImage( const co::ObjectVersion& frameDataVersion,
-                   const PixelViewport& pvp, const Zoom& zoom,
-                   const uint32_t buffers, const bool useAlpha,
-                   uint8_t* data );
+                   const PixelViewport& pvp, const Range &range,
+                   const Zoom& zoom, const uint32_t buffers,
+                   const bool useAlpha, uint8_t* data );
     void setReady( const co::ObjectVersion& frameData,
                    const fabric::FrameData& data ); //!< @internal
 
