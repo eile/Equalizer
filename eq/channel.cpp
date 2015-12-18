@@ -1690,7 +1690,6 @@ bool Channel::_cmdConfigInit( co::ICommand& cmd )
     const Window* window = getWindow();
     if( window->isRunning( ))
     {
-        resetContext();
         _impl->state = STATE_INITIALIZING;
 
         const PixelViewport& pvp = getPixelViewport();
