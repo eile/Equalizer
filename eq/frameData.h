@@ -213,7 +213,7 @@ public:
 
     /** @internal */
     bool addImage( const co::ObjectVersion& frameDataVersion,
-                   const PixelViewport& pvp, const Range &range,
+                   const PixelViewport& pvp, const Range& range,
                    const Zoom& zoom, const uint32_t buffers,
                    const bool useAlpha, uint8_t* data );
     void setReady( const co::ObjectVersion& frameData,
