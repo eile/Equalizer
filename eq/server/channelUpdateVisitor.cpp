@@ -112,9 +112,7 @@ VisitorResult ChannelUpdateVisitor::visitPre( const Compound* compound )
     if( _skipCompound( compound ))
         return TRAVERSE_CONTINUE;
 
-    RenderContext context;
-    _setupRenderContext( compound, context );
-
+    const RenderContext& context = _setupRenderContext( compound );
     _updateFrameRate( compound );
     _updateViewStart( compound, context );
 
@@ -134,13 +132,13 @@ VisitorResult ChannelUpdateVisitor::visitLeaf( const Compound* compound )
         return TRAVERSE_CONTINUE;
     }
 
-    RenderContext context;
-    _setupRenderContext( compound, context );
+    const RenderContext& context = _setupRenderContext( compound );
     _updateFrameRate( compound );
     _updateViewStart( compound, context );
     _updateDraw( compound, context );
     _updateDrawFinish( compound );
-    _updatePostDraw( compound, context );
+    _updateAssemble( compound, context );
+    _updateViewFinish( compound, context );
     return TRAVERSE_CONTINUE;
 }
 
@@ -149,9 +147,10 @@ VisitorResult ChannelUpdateVisitor::visitPost( const Compound* compound )
     if( _skipCompound( compound ))
         return TRAVERSE_CONTINUE;
 
-    RenderContext context;
-    _setupRenderContext( compound, context );
-    _updatePostDraw( compound, context );
+    const RenderContext& context = _setupRenderContext( compound );
+    _updateAssemble( compound, context );
+    _updateReadback( compound, context );
+    _updateViewFinish( compound, context );
 
     return TRAVERSE_CONTINUE;
 }
@@ -166,12 +165,13 @@ co::ObjectVersions ChannelUpdateVisitor::_selectFrames( const Frames& frames )
     return frameIDs;
 }
 
-void ChannelUpdateVisitor::_setupRenderContext( const Compound* compound,
-                                                RenderContext& context )
+RenderContext ChannelUpdateVisitor::_setupRenderContext(
+    const Compound* compound )
 {
     const Channel* destChannel = compound->getInheritChannel();
     LBASSERT( destChannel );
 
+    RenderContext context;
     context.frameID       = _frameID;
     context.pvp           = compound->getInheritPixelViewport();
     context.overdraw      = compound->getInheritOverdraw();
@@ -216,38 +216,37 @@ void ChannelUpdateVisitor::_setupRenderContext( const Compound* compound,
     // TODO: pvp size overcommit check?
 
     compound->computeFrustum( context, _eye );
+    return context;
 }
 
 void ChannelUpdateVisitor::_updateDraw( const Compound* compound,
                                         const RenderContext& context )
 {
     if( compound->hasTiles( ))
+    {
         _updateDrawTiles( compound, context );
-    else if( context.tasks & eq::fabric::TASK_DRAW )
-        _updateDrawPass( compound, context );
-    else if( context.tasks & fabric::TASK_CLEAR )
-        _sendClear( context );
-}
+        return;
+    }
 
-void ChannelUpdateVisitor::_updateDrawPass( const Compound* compound,
-                                            const RenderContext& context )
-{
-    const co::ObjectVersions& frameIDs =
-        (context.tasks & eq::fabric::TASK_READBACK) ?
-            _selectFrames( compound->getOutputFrames( )) :
-            co::ObjectVersions();
+    if( !(context.tasks & fabric::TASK_RENDER) )
+        return;
 
-    _channel->send( fabric::CMD_CHANNEL_FRAME_PASS ) << context << frameIDs;
+    const co::ObjectVersions& frames =
+        (context.tasks & fabric::TASK_READBACK) ?
+            _selectFrames( compound->getOutputFrames( )) : co::ObjectVersions();
+
+    _channel->send( fabric::CMD_CHANNEL_FRAME_RENDER ) << context << frames;
     _updated = true;
-    LBLOG( LOG_TASKS ) << "TASK pass " << _channel->getName() <<  " "
+    LBLOG( LOG_TASKS ) << "TASK render " << _channel->getName() <<  " "
                        << std::endl;
 }
 
 void ChannelUpdateVisitor::_updateDrawTiles( const Compound* compound,
                                              const RenderContext& context )
 {
-    const co::ObjectVersions& frameIDs =
-        _selectFrames( compound->getOutputFrames( ));
+    const co::ObjectVersions& frames =
+        (context.tasks & fabric::TASK_READBACK) ?
+            _selectFrames( compound->getOutputFrames( )) : co::ObjectVersions();
     const Channel* destChannel = compound->getInheritChannel();
     const TileQueues& inputQueues = compound->getInputTileQueues();
     for( TileQueuesCIter i = inputQueues.begin(); i != inputQueues.end(); ++i )
@@ -260,7 +259,7 @@ void ChannelUpdateVisitor::_updateDrawTiles( const Compound* compound,
         const bool isLocal = (_channel == destChannel);
 
         _channel->send( fabric::CMD_CHANNEL_FRAME_TILES )
-                << context << isLocal << id << frameIDs;
+                << context << isLocal << id << frames;
         _updated = true;
         LBLOG( LOG_TASKS ) << "TASK tiles " << _channel->getName() <<  " "
                            << std::endl;
@@ -382,14 +381,6 @@ ChannelUpdateVisitor::_getDrawBufferMask(const Compound* compound) const
     }
 }
 
-void ChannelUpdateVisitor::_updatePostDraw( const Compound* compound,
-                                            const RenderContext& context )
-{
-    _updateAssemble( compound, context );
-    _updateReadback( compound, context );
-    _updateViewFinish( compound, context );
-}
-
 void ChannelUpdateVisitor::_updateAssemble( const Compound* compound,
                                             const RenderContext& context )
 {
@@ -397,43 +388,37 @@ void ChannelUpdateVisitor::_updateAssemble( const Compound* compound,
         return;
 
     const Frames& inputFrames = compound->getInputFrames();
-    const co::ObjectVersions& frameIDs = _selectFrames( inputFrames );
+    const co::ObjectVersions& frames = _selectFrames( inputFrames );
     LBASSERT( !inputFrames.empty( ));
-    if( frameIDs.empty( ))
+    if( frames.empty( ))
         return;
 
     // assemble task
     LBLOG( LOG_ASSEMBLY | LOG_TASKS )
-        << "TASK assemble " << _channel->getName()
-        << " nFrames " << frameIDs.size() << std::endl;
-    _channel->send( fabric::CMD_CHANNEL_FRAME_ASSEMBLE )
-            << context << frameIDs;
+        << "TASK assemble " << _channel->getName() << " nFrames "
+        << frames.size() << std::endl;
+    _channel->send( fabric::CMD_CHANNEL_FRAME_ASSEMBLE ) << context << frames;
     _updated = true;
 }
 
 void ChannelUpdateVisitor::_updateReadback( const Compound* compound,
                                             const RenderContext& context )
 {
-    if( !compound->testInheritTask( fabric::TASK_READBACK ) ||
-        compound->testInheritTask( fabric::TASK_DRAW ) ||
-        ( compound->hasTiles() && compound->isLeaf( )))
-    {
+    if( !compound->testInheritTask( fabric::TASK_READBACK ))
         return;
-    }
 
     const std::vector< Frame* >& outputFrames = compound->getOutputFrames();
-    const co::ObjectVersions& frameIDs = _selectFrames( outputFrames );
+    const co::ObjectVersions& frames = _selectFrames( outputFrames );
     LBASSERT( !outputFrames.empty( ));
-    if( frameIDs.empty() )
+    if( frames.empty() )
         return;
 
     // readback task
-    _channel->send( fabric::CMD_CHANNEL_FRAME_READBACK )
-            << context << frameIDs;
+    _channel->send( fabric::CMD_CHANNEL_FRAME_READBACK ) << context << frames;
     _updated = true;
     LBLOG( LOG_ASSEMBLY | LOG_TASKS )
-        << "TASK readback " << _channel->getName()
-        << " nFrames " << frameIDs.size() << std::endl;
+        << "TASK readback " << _channel->getName() << " nFrames "
+        << frames.size() << std::endl;
 }
 
 void ChannelUpdateVisitor::_updateViewStart( const Compound* compound,

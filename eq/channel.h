@@ -526,13 +526,18 @@ protected:
     EQ_API virtual void frameDraw( const uint128_t& frameID );
 
     /**
-     * Call clear/draw/readback callbacks using the specified context
+     * Execute a rendering pass.
+     *
+     * Depending on the context, will call frameClear(), frameDraw() and/or
+     * frameReadback(). This method may be overridden to break down a single
+     * rendering pass into multiple passes by "splitting up" the
+     * RenderContext.
      *
      * @param context the RenderContext used in the pass.
      * @param frames the output frames for readback.
      */
-    EQ_API virtual bool framePass( const RenderContext& context,
-                                   const Frames& frames );
+    EQ_API virtual bool frameRender( const RenderContext& context,
+                                     const Frames& frames );
 
     /**
      * Assemble all input frames.
@@ -635,8 +640,8 @@ private:
     void _initDrawableConfig();
 
     /** Regular render loop. */
-    void _framePass( const RenderContext& context,
-                     const co::ObjectVersions& frames );
+    void _frameRender( const RenderContext& context,
+                       const co::ObjectVersions& frames );
 
     /** Tile render loop. */
     void _frameTiles( RenderContext& context, bool isLocal,
@@ -644,7 +649,7 @@ private:
                       const co::ObjectVersions& frames );
 
     /** Emit events and set ready output */
-    void _finishFramePass( const RenderContext& context, int64_t startTime,
+    void _finishFrameRender( const RenderContext& context, int64_t startTime,
                            bool hasAsyncReadback, const Frames& frames );
 
     /** Reference the frame for an async operation. */
@@ -705,7 +710,7 @@ private:
     bool _cmdFrameStart( co::ICommand& command );
     bool _cmdFrameFinish( co::ICommand& command );
     bool _cmdFrameClear( co::ICommand& command );
-    bool _cmdFramePass( co::ICommand& cmd );
+    bool _cmdFrameRender( co::ICommand& cmd );
     bool _cmdFrameTiles( co::ICommand& command );
     bool _cmdFrameDrawFinish( co::ICommand& command );
     bool _cmdFrameAssemble( co::ICommand& command );

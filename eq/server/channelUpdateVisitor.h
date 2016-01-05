@@ -59,8 +59,6 @@ private:
     void _sendClear( const RenderContext& context );
 
     void _updateDraw( const Compound* compound, const RenderContext& context );
-    void _updateDrawPass( const Compound* compound,
-                          const RenderContext& context );
     void _updateDrawTiles( const Compound* compound,
                            const RenderContext& context );
     void _updateDrawFinish( const Compound* compound ) const;
@@ -71,11 +69,8 @@ private:
 
     co::ObjectVersions _selectFrames( const Frames& frames ) const;
 
-    void _setupRenderContext( const Compound* compound,
-                              RenderContext& context );
+    RenderContext _setupRenderContext( const Compound* compound );
 
-    void _updatePostDraw( const Compound* compound,
-                          const fabric::RenderContext& context );
     void _updateAssemble( const Compound* compound,
                           const fabric::RenderContext& context );
     void _updateReadback( const Compound* compound,

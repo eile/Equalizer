@@ -36,7 +36,9 @@ enum Task
     TASK_DRAW     = LB_BIT4,  //!< Draw data to the framebuffer
     TASK_ASSEMBLE = LB_BIT5,  //!< Combine input frames
     TASK_READBACK = LB_BIT6,  //!< Read results to output frames
-    TASK_ALL      = LB_BIT_ALL_32
+    TASK_ALL      = LB_BIT_ALL_32,
+
+    TASK_RENDER = (TASK_CLEAR | TASK_DRAW | TASK_READBACK) //!< @internal
 };
 }
 }
