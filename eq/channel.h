@@ -639,14 +639,10 @@ private:
     /** Initialize the channel's drawable config. */
     void _initDrawableConfig();
 
-    /** Regular render loop. */
+    /** Single render loop. */
     void _frameRender( const RenderContext& context,
-                       const co::ObjectVersions& frames );
-
-    /** Tile render loop. */
-    void _frameTiles( RenderContext& context, bool isLocal,
-                      const uint128_t& queueID,
-                      const co::ObjectVersions& frames );
+                       const co::ObjectVersions& frames,
+                       const uint128_ts& queueIDs );
 
     /** Emit events and set ready output */
     void _finishFrameRender( const RenderContext& context, int64_t startTime,
@@ -711,7 +707,6 @@ private:
     bool _cmdFrameFinish( co::ICommand& command );
     bool _cmdFrameClear( co::ICommand& command );
     bool _cmdFrameRender( co::ICommand& cmd );
-    bool _cmdFrameTiles( co::ICommand& command );
     bool _cmdFrameDrawFinish( co::ICommand& command );
     bool _cmdFrameAssemble( co::ICommand& command );
     bool _cmdFrameReadback( co::ICommand& command );

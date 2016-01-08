@@ -59,8 +59,6 @@ private:
     void _sendClear( const RenderContext& context );
 
     void _updateDraw( const Compound* compound, const RenderContext& context );
-    void _updateDrawTiles( const Compound* compound,
-                           const RenderContext& context );
     void _updateDrawFinish( const Compound* compound ) const;
     void _updateFrameRate( const Compound* compound ) const;
 
@@ -68,6 +66,8 @@ private:
     fabric::ColorMask _getDrawBufferMask( const Compound* compound ) const;
 
     co::ObjectVersions _selectFrames( const Frames& frames ) const;
+    uint128_ts _selectQueues( const Compound* compound,
+                              const RenderContext& context ) const;
 
     RenderContext _setupRenderContext( const Compound* compound );
 

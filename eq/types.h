@@ -240,6 +240,7 @@ using fabric::Statistics;   //!< A vector of Statistic events
 using fabric::Strings;      //!< A vector of std::strings
 using fabric::StringsCIter; //!< A const_iterator over a std::string vector
 using fabric::Viewports;    //!< A vector of eq::Viewport
+using fabric::uint128_ts;
 
 /** Frustum culling helper */
 typedef vmml::frustum_culler< float >  FrustumCullerf;

@@ -140,8 +140,6 @@ void Channel::attach( const uint128_t& id, const uint32_t instanceID )
                      CmdFunc( this, &Channel::_cmdStopFrame ), commandQ );
     registerCommand( fabric::CMD_CHANNEL_FRAME_RENDER,
                      CmdFunc( this, &Channel::_cmdFrameRender ), queue );
-    registerCommand( fabric::CMD_CHANNEL_FRAME_TILES,
-                     CmdFunc( this, &Channel::_cmdFrameTiles ), queue );
     registerCommand( fabric::CMD_CHANNEL_FINISH_READBACK,
                      CmdFunc( this, &Channel::_cmdFinishReadback ), transferQ );
     registerCommand( fabric::CMD_CHANNEL_DELETE_TRANSFER_WINDOW,
@@ -1079,83 +1077,76 @@ private:
 typedef lunchbox::RefPtr< detail::RBStat > RBStatPtr;
 
 void Channel::_frameRender( const RenderContext& context,
-                            const co::ObjectVersions& frameIDs )
+                            const co::ObjectVersions& frameIDs,
+                            const uint128_ts& queueIDs )
 {
     const Frames& frames = _getFrames( context, frameIDs, true );
     bindDrawFrameBuffer();
 
-    int64_t startTime = getConfig()->getTime();
+    const int64_t startTime = getConfig()->getTime();
     _impl->framePassTimings[detail::Channel::ClearTime] = 0;
     _impl->framePassTimings[detail::Channel::DrawTime] = 0;
     _impl->framePassTimings[detail::Channel::ReadbackTime] = 0;
+    bool hasAsyncReadback = false;
 
-    const bool hasAsyncReadback = frameRender( context, frames );
+    for( const uint128_t& queueID : queueIDs )
+    {
+        frameTilesStart( context.frameID );
+        const uint32_t timeout = getConfig()->getTimeout();
+        const size_t nFrames = frames.size();
+        std::vector< size_t > nImages( nFrames, 0 );
+
+        co::QueueSlave* queue = _getQueue( queueID );
+        LBASSERT( queue );
+        for( ;; )
+        {
+            co::ObjectICommand tileCmd = queue->pop( timeout );
+            if( !tileCmd.isValid( ))
+                break;
+
+            const Tile& tile = tileCmd.read< Tile >();
+            RenderContext tileCtx( context );
+            tileCtx.apply( tile );
+
+            const PixelViewport tilePVP = tileCtx.pvp;
+            if ( !tileCtx.isLocal )
+            {
+                tileCtx.pvp.x = 0;
+                tileCtx.pvp.y = 0;
+            }
+
+            for( size_t i = 0; i < nFrames; ++i )
+                nImages[i] = frames[i]->getImages().size();
+
+            if( frameRender( tileCtx, frames ))
+                hasAsyncReadback = true;
+
+            for( size_t i = 0; i < nFrames; ++i )
+            {
+                const Frame* frame = frames[i];
+                const Images& images = frame->getImages();
+                for( size_t j = nImages[i]; j < images.size(); ++j )
+                {
+                    Image* image = images[j];
+                    const PixelViewport& pvp = image->getPixelViewport();
+                    image->setOffset( pvp.x + tilePVP.x, pvp.y + tilePVP.y );
+                }
+            }
+        }
+        frameTilesFinish( context.frameID );
+    }
+    // else
+    if( queueIDs.empty( ))
+        hasAsyncReadback = frameRender( context, frames );
+
     _finishFrameRender( context, startTime, hasAsyncReadback, frames );
     bindFrameBuffer();
 }
 
-void Channel::_frameTiles( RenderContext& context, const bool isLocal,
-                           const uint128_t& queueID,
-                           const co::ObjectVersions& frameIDs )
-{
-    frameTilesStart( context.frameID );
-
-    const Frames& frames = _getFrames( context, frameIDs, true );
-    _impl->framePassTimings[detail::Channel::ClearTime] = 0;
-    _impl->framePassTimings[detail::Channel::DrawTime] = 0;
-    _impl->framePassTimings[detail::Channel::ReadbackTime] = 0;
-    const int64_t startTime = getConfig()->getTime();
-    const uint32_t timeout = getConfig()->getTimeout();
-    bool hasAsyncReadback = false;
-
-    const size_t nFrames = frames.size();
-    std::vector< size_t > nImages( nFrames, 0 );
-
-    co::QueueSlave* queue = _getQueue( queueID );
-    LBASSERT( queue );
-    for( ;; )
-    {
-        co::ObjectICommand tileCmd = queue->pop( timeout );
-        if( !tileCmd.isValid( ))
-            break;
-
-        const Tile& tile = tileCmd.read< Tile >();
-        context.apply( tile );
-
-        const PixelViewport tilePVP = context.pvp;
-        if ( !isLocal )
-        {
-            context.pvp.x = 0;
-            context.pvp.y = 0;
-        }
-
-        for( size_t i = 0; i < nFrames; ++i )
-            nImages[i] = frames[i]->getImages().size();
-
-        if( frameRender( context, frames ))
-            hasAsyncReadback = true;
-
-        for( size_t i = 0; i < nFrames; ++i )
-        {
-            const Frame* frame = frames[i];
-            const Images& images = frame->getImages();
-            for( size_t j = nImages[i]; j < images.size(); ++j )
-            {
-                Image* image = images[j];
-                const PixelViewport& pvp = image->getPixelViewport();
-                image->setOffset( pvp.x + tilePVP.x, pvp.y + tilePVP.y );
-            }
-        }
-    }
-
-    _finishFrameRender( context, startTime, hasAsyncReadback, frames );
-    frameTilesFinish( context.frameID );
-    resetContext();
-}
-
-void Channel::_finishFrameRender( const RenderContext& context, int64_t startTime,
-                                 const bool hasAsyncReadback,
-                                 const Frames& frames )
+void Channel::_finishFrameRender( const RenderContext& context,
+                                  int64_t startTime,
+                                  const bool hasAsyncReadback,
+                                  const Frames& frames )
 {
     overrideContext( context );
     if( context.tasks & fabric::TASK_CLEAR )
@@ -1958,26 +1949,12 @@ bool Channel::_cmdFrameRender( co::ICommand& cmd )
     co::ObjectICommand command( cmd );
     RenderContext context = command.read< RenderContext >();
     const co::ObjectVersions& frames = command.read< co::ObjectVersions >();
+    const uint128_ts& queues = command.read< uint128_ts >();
 
     LBLOG( LOG_TASKS ) << "TASK channel frame render " << getName() <<  " "
                        << command << " " << context << std::endl;
 
-    _frameRender( context, frames );
-    return true;
-}
-
-bool Channel::_cmdFrameTiles( co::ICommand& cmd )
-{
-    co::ObjectICommand command( cmd );
-    RenderContext context = command.read< RenderContext >();
-    const bool isLocal = command.read< bool >();
-    const uint128_t& queueID = command.read< uint128_t >();
-    const co::ObjectVersions& frames = command.read< co::ObjectVersions >();
-
-    LBLOG( LOG_TASKS ) << "TASK channel frame tiles " << getName() <<  " "
-                       << command << " " << context << std::endl;
-
-    _frameTiles( context, isLocal, queueID, frames );
+    _frameRender( context, frames, queues );
     return true;
 }
 

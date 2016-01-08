@@ -155,16 +155,6 @@ VisitorResult ChannelUpdateVisitor::visitPost( const Compound* compound )
     return TRAVERSE_CONTINUE;
 }
 
-co::ObjectVersions ChannelUpdateVisitor::_selectFrames( const Frames& frames )
-    const
-{
-    co::ObjectVersions frameIDs;
-    for( Frame* frame : frames )
-        if( frame->hasData( _eye ))
-            frameIDs.push_back( co::ObjectVersion( frame ));
-    return frameIDs;
-}
-
 RenderContext ChannelUpdateVisitor::_setupRenderContext(
     const Compound* compound )
 {
@@ -191,6 +181,7 @@ RenderContext ChannelUpdateVisitor::_setupRenderContext(
     context.taskID        = compound->getTaskID();
     context.tasks         = compound->getInheritTasks();
     context.finishDraw    = _channel->hasListeners(); // finish for eq stats
+    context.isLocal       = _channel == destChannel;
 
     const View* view = destChannel->getView();
     LBASSERT( context.view == co::ObjectVersion( view ));
@@ -219,51 +210,45 @@ RenderContext ChannelUpdateVisitor::_setupRenderContext(
     return context;
 }
 
+co::ObjectVersions ChannelUpdateVisitor::_selectFrames( const Frames& frames )
+    const
+{
+    co::ObjectVersions frameIDs;
+    for( Frame* frame : frames )
+        if( frame->hasData( _eye ))
+            frameIDs.push_back( co::ObjectVersion( frame ));
+    return frameIDs;
+}
+
+uint128_ts ChannelUpdateVisitor::_selectQueues(
+    const Compound* compound, const RenderContext& context ) const
+{
+    uint128_ts queues;
+    const TileQueues& inputQueues = compound->getInputTileQueues();
+    for( const TileQueue* inputQueue : inputQueues )
+    {
+        const TileQueue* outputQueue = inputQueue->getOutputQueue( context.eye);
+        queues.push_back( outputQueue->getQueueMasterID( context.eye ));
+    }
+    return queues;
+}
+
 void ChannelUpdateVisitor::_updateDraw( const Compound* compound,
                                         const RenderContext& context )
 {
-    if( compound->hasTiles( ))
-    {
-        _updateDrawTiles( compound, context );
-        return;
-    }
-
     if( !(context.tasks & fabric::TASK_RENDER) )
         return;
 
     const co::ObjectVersions& frames =
         (context.tasks & fabric::TASK_READBACK) ?
             _selectFrames( compound->getOutputFrames( )) : co::ObjectVersions();
+    const uint128_ts& queues = _selectQueues( compound, context );
 
-    _channel->send( fabric::CMD_CHANNEL_FRAME_RENDER ) << context << frames;
+    _channel->send( fabric::CMD_CHANNEL_FRAME_RENDER )
+        << context << frames << queues;
     _updated = true;
     LBLOG( LOG_TASKS ) << "TASK render " << _channel->getName() <<  " "
                        << std::endl;
-}
-
-void ChannelUpdateVisitor::_updateDrawTiles( const Compound* compound,
-                                             const RenderContext& context )
-{
-    const co::ObjectVersions& frames =
-        (context.tasks & fabric::TASK_READBACK) ?
-            _selectFrames( compound->getOutputFrames( )) : co::ObjectVersions();
-    const Channel* destChannel = compound->getInheritChannel();
-    const TileQueues& inputQueues = compound->getInputTileQueues();
-    for( TileQueuesCIter i = inputQueues.begin(); i != inputQueues.end(); ++i )
-    {
-        const TileQueue* inputQueue = *i;
-        const TileQueue* outputQueue = inputQueue->getOutputQueue( context.eye);
-        const uint128_t& id = outputQueue->getQueueMasterID( context.eye );
-        LBASSERT( id != 0 );
-
-        const bool isLocal = (_channel == destChannel);
-
-        _channel->send( fabric::CMD_CHANNEL_FRAME_TILES )
-                << context << isLocal << id << frames;
-        _updated = true;
-        LBLOG( LOG_TASKS ) << "TASK tiles " << _channel->getName() <<  " "
-                           << std::endl;
-    }
 }
 
 void ChannelUpdateVisitor::_updateDrawFinish( const Compound* compound ) const

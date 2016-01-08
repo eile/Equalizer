@@ -105,7 +105,6 @@ using co::Strings;
 using co::StringsCIter;
 typedef co::ObjectOCommand EventOCommand;
 
-using lunchbox::uint128_t;
 using lunchbox::VisitorResult;
 using lunchbox::TRAVERSE_CONTINUE;
 using lunchbox::TRAVERSE_PRUNE;
@@ -115,6 +114,8 @@ typedef lunchbox::RefPtr< const Client > ConstClientPtr;
 typedef lunchbox::RefPtr< SwapBarrier > SwapBarrierPtr;
 typedef lunchbox::RefPtr< const SwapBarrier > SwapBarrierConstPtr;
 
+using servus::uint128_t;
+typedef std::vector< uint128_t > uint128_ts;
 }
 }
 

@@ -70,7 +70,8 @@ namespace fabric
 
         ColorMask      bufferMask;     //!< color mask for anaglyph stereo
         bool           finishDraw;     //!< Precise draw statistics needed
-        bool           alignDummy[27]; //!< @internal padding
+        bool           isLocal;        //!< src==dest channel
+        bool           alignDummy[26]; //!< @internal padding
     };
 
     EQFABRIC_API std::ostream& operator << ( std::ostream& os,
