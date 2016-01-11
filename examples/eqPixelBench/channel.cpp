@@ -133,7 +133,6 @@ void Channel::_testFormats( float applyZoom )
 
     const eq::PixelViewport& pvp = getPixelViewport();
     const eq::Vector2i offset( pvp.x, pvp.y );
-    const eq::Range& range = getRange();
     const eq::Zoom zoom( applyZoom, applyZoom );
 
     lunchbox::Clock clock;
@@ -174,8 +173,8 @@ void Channel::_testFormats( float applyZoom )
                 clock.reset();
                 while( clock.getTime64() < 100 /*ms*/ )
                 {
-                    image->startReadback( eq::Frame::BUFFER_COLOR, pvp, range,
-                                          zoom, glObjects );
+                    image->startReadback( eq::Frame::BUFFER_COLOR, pvp,
+                                          getContext(), zoom, glObjects );
                     image->finishReadback( glObjects.glewGetContext( ));
                     ++nLoops;
                 }
@@ -249,7 +248,6 @@ void Channel::_testTiledOperations()
 
     const eq::PixelViewport& pvp    = getPixelViewport();
     const eq::Vector2i offset( pvp.x, pvp.y );
-    const eq::Range& range          = getRange();
 
     eq::Vector2i area;
     area.x() = pvp.w;
@@ -288,7 +286,7 @@ void Channel::_testTiledOperations()
             image->clearPixelData( eq::Frame::BUFFER_DEPTH );
 
             clock.reset();
-            image->startReadback( eq::Frame::BUFFER_DEPTH, subPVP, range,
+            image->startReadback( eq::Frame::BUFFER_DEPTH, subPVP, getContext(),
                                   eq::Zoom::NONE, glObjects );
             image->finishReadback( glObjects.glewGetContext( ));
             msec += clock.getTimef();
@@ -318,7 +316,7 @@ void Channel::_testTiledOperations()
             image->clearPixelData( eq::Frame::BUFFER_COLOR );
 
             clock.reset();
-            image->startReadback( eq::Frame::BUFFER_COLOR, subPVP, range,
+            image->startReadback( eq::Frame::BUFFER_COLOR, subPVP, getContext(),
                                   eq::Zoom::NONE, glObjects );
             image->finishReadback( glObjects.glewGetContext( ));
             msec += clock.getTimef();
@@ -373,7 +371,6 @@ void Channel::_testDepthAssemble()
 
     const eq::PixelViewport& pvp    = getPixelViewport();
     const eq::Vector2i offset( pvp.x, pvp.y );
-    const eq::Range& range          = getRange();
 
     eq::Vector2i area;
     area.x() = pvp.w;
@@ -411,7 +408,7 @@ void Channel::_testDepthAssemble()
         image->clearPixelData( eq::Frame::BUFFER_DEPTH );
 
         image->startReadback( eq::Frame::BUFFER_COLOR | eq::Frame::BUFFER_DEPTH,
-                              pvp, range, eq::Zoom::NONE, glObjects );
+                              pvp, getContext(), eq::Zoom::NONE, glObjects );
         image->finishReadback( glObjects.glewGetContext( ));
         LBASSERT( image->hasPixelData( eq::Frame::BUFFER_COLOR ));
         LBASSERT( image->hasPixelData( eq::Frame::BUFFER_DEPTH ));

@@ -368,10 +368,9 @@ void Channel::frameReadback( const uint128_t&, const Frames& frames )
     util::ObjectManager&  glObjects   = getObjectManager();
     const DrawableConfig& drawable    = getDrawableConfig();
     const PixelViewports& regions     = getRegions();
-    const Range& range                = getRange();
 
     for( Frame* frame : frames )
-        frame->startReadback( glObjects, drawable, regions, range );
+        frame->startReadback( glObjects, drawable, regions, getContext( ));
 
     EQ_GL_CALL( resetAssemblyState( ));
 }
@@ -1089,6 +1088,9 @@ void Channel::_frameRender( const RenderContext& context,
     _impl->framePassTimings[detail::Channel::ReadbackTime] = 0;
     bool hasAsyncReadback = false;
 
+    if( queueIDs.empty( ))
+        hasAsyncReadback = frameRender( context, frames );
+    // else
     for( const uint128_t& queueID : queueIDs )
     {
         frameTilesStart( context.frameID );
@@ -1135,9 +1137,6 @@ void Channel::_frameRender( const RenderContext& context,
         }
         frameTilesFinish( context.frameID );
     }
-    // else
-    if( queueIDs.empty( ))
-        hasAsyncReadback = frameRender( context, frames );
 
     _finishFrameRender( context, startTime, hasAsyncReadback, frames );
     bindFrameBuffer();
@@ -1456,12 +1455,14 @@ void Channel::_transmitImage( const co::ObjectVersion& frameDataVersion,
     }
     LBASSERT( image->getPixelViewport().isValid( ));
 
+    // Counterpart in FrameData::newImage()
     co::ObjectOCommand command( co::Connections( 1, connection ),
                                 fabric::CMD_NODE_FRAMEDATA_TRANSMIT,
                                 co::COMMANDTYPE_OBJECT, nodeID,
                                 CO_INSTANCE_ALL );
-    command << frameDataVersion << image->getPixelViewport() << image->getZoom()
-            << commandBuffers << frameNumber << image->getAlphaUsage();
+    command << frameDataVersion << frameNumber << image->getPixelViewport()
+            << image->getZoom() << image->getContext() << commandBuffers
+            << image->getAlphaUsage();
     command.sendHeader( imageDataSize );
 
 #ifndef NDEBUG

@@ -119,7 +119,7 @@ public:
 
         if( framebufferImage.startReadback( eq::Frame::BUFFER_COLOR,
                                             channel.getPixelViewport(),
-                                            channel.getRange(),
+                                            channel.getContext(),
                                             channel.getZoom(),
                                             channel.getObjectManager( )))
         {

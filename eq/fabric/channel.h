@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2010-2015, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2010-2016, Stefan Eilemann <eile@equalizergraphics.com>
  *                          Cedric Stalder <cedric.stalder@gmail.com>
  *                          Julio Delgado Mangas <julio.delgadomangas@epfl.ch>
  *
@@ -277,6 +277,9 @@ public:
 
     /** @warning Undocumented - may not be supported in the future */
     uint32_t getTaskID() const { return _context->taskID; }
+
+    /** @internal @return the current render context. */
+    const RenderContext& getContext() const { return *_context; }
     //@}
 
     /** @name Attributes */
@@ -348,9 +351,6 @@ protected:
 
     /** @internal Re-set the channel's native render context. */
     void resetContext() { _context = &_data.nativeContext; }
-
-    /** @internal @return the current render context. */
-    const RenderContext& getContext() const { return *_context; }
 
     /** @internal @return the native render context. */
     const RenderContext& getNativeContext() const

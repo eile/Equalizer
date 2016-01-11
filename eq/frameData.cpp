@@ -35,6 +35,7 @@
 #include <co/connectionDescription.h>
 #include <co/dataIStream.h>
 #include <co/dataOStream.h>
+#include <co/objectICommand.h>
 #include <lunchbox/monitor.h>
 #include <lunchbox/scopedMutex.h>
 #include <pression/plugins/compressor.h>
@@ -264,26 +265,93 @@ Image* FrameData::_allocImage( const eq::Frame::Type type,
     return image;
 }
 
-#ifndef EQ_2_0_API
-void FrameData::readback( const Frame& frame,
-                          util::ObjectManager& glObjects,
-                          const DrawableConfig& config,
-                          const Range& range )
+void FrameData::newImage( co::ObjectICommand& command )
 {
-    const Images& images = startReadback( frame, glObjects, config,
-                                       PixelViewports( 1, getPixelViewport( )),
-                                       range );
+    // Counterpart in Channel::_transmitImage
+    const PixelViewport& pvp = command.read< PixelViewport >();
+    const Zoom& zoom = command.read< Zoom >();
+    const RenderContext& context = command.read< RenderContext >();
+    const uint32_t imageBuffers = command.read< uint32_t >();
+    const bool useAlpha = command.read< bool >();
 
-    for( ImagesCIter i = images.begin(); i != images.end(); ++i )
-        (*i)->finishReadback( frame.getZoom(), glObjects.glewGetContext( ));
+    // Note on the cast: since the PixelData structure stores non-const
+    // pointers, we have to go non-const at some point, even though we do not
+    // modify the data.
+    uint8_t* data = (uint8_t*)( command.getRemainingBuffer(
+                                    command.getRemainingBufferSize( )));
+
+    LBASSERT( pvp.isValid( ));
+    LBLOG( LOG_ASSEMBLY )
+        << "new image data for " << co::ObjectVersion( this ) << ", buffers "
+        << imageBuffers << " pvp " << pvp << std::endl;
+
+    Image* image = _allocImage( Frame::TYPE_MEMORY, DrawableConfig(),
+                                false /* set quality */ );
+
+    image->setPixelViewport( pvp );
+    image->setZoom( zoom );
+    image->setContext( context );
+    image->setAlphaUsage( useAlpha );
+
+    Frame::Buffer buffers[] = { Frame::BUFFER_COLOR, Frame::BUFFER_DEPTH };
+    for( unsigned i = 0; i < 2; ++i )
+    {
+        const Frame::Buffer buffer = buffers[i];
+
+        if( imageBuffers & buffer )
+        {
+            PixelData pixelData;
+            const ImageHeader* header = reinterpret_cast<ImageHeader*>( data );
+            data += sizeof( ImageHeader );
+
+            pixelData.internalFormat  = header->internalFormat;
+            pixelData.externalFormat  = header->externalFormat;
+            pixelData.pixelSize       = header->pixelSize;
+            pixelData.pvp             = header->pvp;
+            pixelData.compressorFlags = header->compressorFlags;
+
+            const uint32_t compressor = header->compressorName;
+            if( compressor > EQ_COMPRESSOR_NONE )
+            {
+                pression::CompressorChunks chunks;
+                const uint32_t nChunks = header->nChunks;
+                chunks.reserve( nChunks );
+
+                for( uint32_t j = 0; j < nChunks; ++j )
+                {
+                    const uint64_t size = *reinterpret_cast< uint64_t*>( data );
+                    data += sizeof( uint64_t );
+
+                    chunks.push_back( pression::CompressorChunk( data, size ));
+                    data += size;
+                }
+                pixelData.compressedData =
+                    pression::CompressorResult( compressor, chunks );
+            }
+            else
+            {
+                const uint64_t size = *reinterpret_cast< uint64_t*>( data );
+                data += sizeof( uint64_t );
+
+                pixelData.pixels = data;
+                data += size;
+                LBASSERT( size == pixelData.pvp.getArea()*pixelData.pixelSize );
+            }
+
+            image->setZoom( zoom );
+            image->setQuality( buffer, header->quality );
+            image->setPixelData( buffer, pixelData );
+        }
+    }
+
+    _impl->pendingImages.push_back( image );
 }
-#endif
 
 Images FrameData::startReadback( const Frame& frame,
                                  util::ObjectManager& glObjects,
                                  const DrawableConfig& config,
                                  const PixelViewports& regions,
-                                 const Range &range )
+                                 const RenderContext& context )
 {
     if( _buffers == Frame::BUFFER_NONE )
         return Images();
@@ -306,8 +374,11 @@ Images FrameData::startReadback( const Frame& frame,
     if( getType() == eq::Frame::TYPE_TEXTURE )
     {
         Image* image = newImage( getType(), config );
-        if( image->startReadback( getBuffers(), absPVP, range, zoom, glObjects ))
+        if( image->startReadback( getBuffers(), absPVP, context, zoom,
+                                  glObjects ))
+        {
             images.push_back( image );
+        }
         image->setOffset( 0, 0 );
         return images;
     }
@@ -334,7 +405,7 @@ Images FrameData::startReadback( const Frame& frame,
             continue;
 
         Image* image = newImage( getType(), config );
-        if( image->startReadback( getBuffers(), pvp, range, zoom, glObjects ))
+        if( image->startReadback( getBuffers(), pvp, context, zoom, glObjects ))
             images.push_back( image );
 
         pvp -= frame.getOffset();
@@ -417,77 +488,6 @@ void FrameData::removeListener( Listener& listener )
     Listeners::iterator i = lunchbox::find( _impl->listeners.data, &listener );
     LBASSERT( i != _impl->listeners->end( ));
     _impl->listeners->erase( i );
-}
-
-bool FrameData::addImage( const co::ObjectVersion& frameDataVersion,
-                          const PixelViewport& pvp, const Range& range,
-                          const Zoom& zoom, const uint32_t buffers_,
-                          const bool useAlpha, uint8_t* data )
-{
-    LBASSERT( _impl->readyVersion < frameDataVersion.version.low( ));
-    if( _impl->readyVersion >= frameDataVersion.version.low( ))
-        return false;
-
-    Image* image = _allocImage( Frame::TYPE_MEMORY, DrawableConfig(),
-                                false /* set quality */ );
-
-    image->setPixelViewport( pvp );
-    image->setRange( range );
-    image->setAlphaUsage( useAlpha );
-
-    Frame::Buffer buffers[] = { Frame::BUFFER_COLOR, Frame::BUFFER_DEPTH };
-    for( unsigned i = 0; i < 2; ++i )
-    {
-        const Frame::Buffer buffer = buffers[i];
-
-        if( buffers_ & buffer )
-        {
-            PixelData pixelData;
-            const ImageHeader* header = reinterpret_cast<ImageHeader*>( data );
-            data += sizeof( ImageHeader );
-
-            pixelData.internalFormat  = header->internalFormat;
-            pixelData.externalFormat  = header->externalFormat;
-            pixelData.pixelSize       = header->pixelSize;
-            pixelData.pvp             = header->pvp;
-            pixelData.compressorFlags = header->compressorFlags;
-
-            const uint32_t compressor = header->compressorName;
-            if( compressor > EQ_COMPRESSOR_NONE )
-            {
-                pression::CompressorChunks chunks;
-                const uint32_t nChunks = header->nChunks;
-                chunks.reserve( nChunks );
-
-                for( uint32_t j = 0; j < nChunks; ++j )
-                {
-                    const uint64_t size = *reinterpret_cast< uint64_t*>( data );
-                    data += sizeof( uint64_t );
-
-                    chunks.push_back( pression::CompressorChunk( data, size ));
-                    data += size;
-                }
-                pixelData.compressedData =
-                    pression::CompressorResult( compressor, chunks );
-            }
-            else
-            {
-                const uint64_t size = *reinterpret_cast< uint64_t*>( data );
-                data += sizeof( uint64_t );
-
-                pixelData.pixels = data;
-                data += size;
-                LBASSERT( size == pixelData.pvp.getArea()*pixelData.pixelSize );
-            }
-
-            image->setZoom( zoom );
-            image->setQuality( buffer, header->quality );
-            image->setPixelData( buffer, pixelData );
-        }
-    }
-
-    _impl->pendingImages.push_back( image );
-    return true;
 }
 
 std::ostream& operator << ( std::ostream& os, const FrameData& data )

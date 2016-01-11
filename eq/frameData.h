@@ -122,6 +122,9 @@ public:
     EQ_API Image* newImage( const Frame::Type type,
                             const DrawableConfig& config );
 
+    /** @internal new image from received data. */
+    void newImage( co::ObjectICommand& command );
+
     /** Clear the frame by recycling the attached images. @version 1.0 */
     EQ_API void clear();
 
@@ -134,23 +137,6 @@ public:
     /** Deallocate all transfer and compression plugins on all images. */
     EQ_API void resetPlugins();
 
-#ifndef EQ_2_0_API
-    /**
-     * Read back an image for this frame data.
-     *
-     * The newly read image is added to the data using newImage(). Existing
-     * images are retained.
-     *
-     * @param frame the corresponding output frame holder.
-     * @param glObjects the GL object manager for the current GL context.
-     * @param config the configuration of the source frame buffer.
-     * @version 1.0
-     * @deprecated @sa startReadback()
-     */
-    void readback( const Frame& frame, util::ObjectManager& glObjects,
-                   const DrawableConfig& config, const Range& range );
-#endif
-
     /**
      * Start reading back a set of images for this frame data.
      *
@@ -161,6 +147,7 @@ public:
      * @param glObjects the GL object manager for the current GL context.
      * @param config the configuration of the source frame buffer.
      * @param regions the areas to read back.
+     * @param context the render context producing the pixel data.
      * @return the new images which need finishReadback.
      * @version 1.3.0
      */
@@ -168,7 +155,7 @@ public:
                           util::ObjectManager& glObjects,
                           const DrawableConfig& config,
                           const PixelViewports& regions,
-                          const Range& range );
+                          const RenderContext& context );
 
     /**
      * Set the frame data ready.
@@ -212,10 +199,6 @@ public:
     //@}
 
     /** @internal */
-    bool addImage( const co::ObjectVersion& frameDataVersion,
-                   const PixelViewport& pvp, const Range& range,
-                   const Zoom& zoom, const uint32_t buffers,
-                   const bool useAlpha, uint8_t* data );
     void setReady( const co::ObjectVersion& frameData,
                    const fabric::FrameData& data ); //!< @internal
 

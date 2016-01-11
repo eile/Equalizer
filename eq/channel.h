@@ -528,10 +528,9 @@ protected:
     /**
      * Execute a rendering pass.
      *
-     * Depending on the context, will call frameClear(), frameDraw() and/or
+     * Depending on the context, invokes frameClear(), frameDraw() and/or
      * frameReadback(). This method may be overridden to break down a single
-     * rendering pass into multiple passes by "splitting up" the
-     * RenderContext.
+     * rendering pass into multiple passes by "splitting up" the RenderContext.
      *
      * @param context the RenderContext used in the pass.
      * @param frames the output frames for readback.

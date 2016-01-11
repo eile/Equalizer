@@ -141,12 +141,10 @@ public:
      *
      * @param glObjects the GL object manager for the current GL context.
      * @param config the configuration of the source frame buffer.
-     * @param range the DB range associated to this image data.
      * @version 1.0
      */
     EQ_API void readback( util::ObjectManager& glObjects,
-                          const DrawableConfig& config,
-                          const Range& range );
+                          const DrawableConfig& config );
 
     /**
      * Read back a set of images.
@@ -156,13 +154,11 @@ public:
      * @param glObjects the GL object manager for the current GL context.
      * @param config the configuration of the source frame buffer.
      * @param regions the areas to read back.
-     * @param range the DB range associated to this image data.
      * @version 1.0
      */
     EQ_API void readback( util::ObjectManager& glObjects,
                           const DrawableConfig& config,
-                          const PixelViewports& regions,
-                          const Range& range );
+                          const PixelViewports& regions );
 
     /**
      * Start reading back a set of images for this frame.
@@ -173,14 +169,14 @@ public:
      *
      * @param glObjects the GL object manager for the current GL context.
      * @param config the configuration of the source frame buffer.
-     * @param regions the areas to read back.
+     * @param context the render context producing the pixel data.
      * @return the new images which need finishReadback.
      * @version 1.3.2
      */
     EQ_API Images startReadback( util::ObjectManager& glObjects,
                                  const DrawableConfig& config,
                                  const PixelViewports& regions,
-                                 const Range& range );
+                                 const RenderContext& context );
 
     /**
      * Set the frame ready.
