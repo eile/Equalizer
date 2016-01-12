@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2006-2015, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2006-2016, Stefan Eilemann <eile@equalizergraphics.com>
  *                          Enrique G. Paredes <egparedes@ifi.uzh.ch>
  *
  * This library is free software; you can redistribute it and/or modify it under
@@ -40,6 +40,8 @@ RenderContext::RenderContext()
         , period( 1 )
         , phase( 0 )
         , eye( EYE_CYCLOP )
+        , finishDraw( false )
+        , isLocal( false )
 {
 }
 

@@ -1,8 +1,8 @@
 
-/* Copyright (c) 2010-2013, Stefan Eilemann <eile@equalizergraphics.com>
- *                    2010, Daniel Nachbaur <danielnachbaur@gmail.com>
- *                    2013, Julio Delgado Mangas <julio.delgadomangas@epfl.ch>
- *                    2015, Enrique <egparedes@ifi.uzh.ch>
+/* Copyright (c) 2010-2016, Stefan Eilemann <eile@equalizergraphics.com>
+ *                          Daniel Nachbaur <danielnachbaur@gmail.com>
+ *                          Julio Delgado Mangas <julio.delgadomangas@epfl.ch>
+ *                          Enrique <egparedes@ifi.uzh.ch>
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published

@@ -348,7 +348,7 @@ void FrameData::newImage( co::ObjectICommand& command )
 }
 
 Images FrameData::startReadback( const Frame& frame,
-                                 util::ObjectManager& glObjects,
+                                 util::ObjectManager& om,
                                  const DrawableConfig& config,
                                  const PixelViewports& regions,
                                  const RenderContext& context )
@@ -374,11 +374,9 @@ Images FrameData::startReadback( const Frame& frame,
     if( getType() == eq::Frame::TYPE_TEXTURE )
     {
         Image* image = newImage( getType(), config );
-        if( image->startReadback( getBuffers(), absPVP, context, zoom,
-                                  glObjects ))
-        {
+        if( image->startReadback( getBuffers(), absPVP, context, frameZoom, om ))
             images.push_back( image );
-        }
+
         image->setOffset( 0, 0 );
         return images;
     }
@@ -390,7 +388,7 @@ Images FrameData::startReadback( const Frame& frame,
     if( buffers & Frame::BUFFER_DEPTH && frameZoom == Zoom::NONE )
         regions = _impl->roiFinder->findRegions( buffers, absPVP, frameZoom,
                                                  frame.getAssemblyStage(),
-                                                 frame.getFrameID(), glObjects);
+                                                 frame.getFrameID(), om);
     else
         regions.push_back( absPVP );
 #endif
@@ -405,7 +403,7 @@ Images FrameData::startReadback( const Frame& frame,
             continue;
 
         Image* image = newImage( getType(), config );
-        if( image->startReadback( getBuffers(), pvp, context, zoom, glObjects ))
+        if( image->startReadback( getBuffers(), pvp, context, frameZoom, om ))
             images.push_back( image );
 
         pvp -= frame.getOffset();

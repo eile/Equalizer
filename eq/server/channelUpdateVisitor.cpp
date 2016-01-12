@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2007-2015, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2007-2016, Stefan Eilemann <eile@equalizergraphics.com>
  *                           Daniel Nachbaur <danielnachbaur@gmail.com>
  *                          Cedric Stalder <cedric.stalder@gmail.com>
  *                          Enrique G. Paredes <egparedes@ifi.uzh.ch>
@@ -175,11 +175,11 @@ RenderContext ChannelUpdateVisitor::_setupRenderContext(
     context.offset.x()    = context.pvp.x;
     context.offset.y()    = context.pvp.y;
     context.eye           = _eye;
+    context.tasks         = compound->getInheritTasks();
     context.buffer        = _getDrawBuffer( compound );
     context.bufferMask    = _getDrawBufferMask( compound );
     context.view          = destChannel->getViewVersion();
     context.taskID        = compound->getTaskID();
-    context.tasks         = compound->getInheritTasks();
     context.finishDraw    = _channel->hasListeners(); // finish for eq stats
     context.isLocal       = _channel == destChannel;
 

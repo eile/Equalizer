@@ -120,6 +120,8 @@ void Channel::attach( const uint128_t& id, const uint32_t instanceID )
                      CmdFunc( this, &Channel::_cmdFrameFinish ), queue );
     registerCommand( fabric::CMD_CHANNEL_FRAME_CLEAR,
                      CmdFunc( this, &Channel::_cmdFrameClear ), queue );
+    registerCommand( fabric::CMD_CHANNEL_FRAME_RENDER,
+                     CmdFunc( this, &Channel::_cmdFrameRender ), queue );
     registerCommand( fabric::CMD_CHANNEL_FRAME_DRAW_FINISH,
                      CmdFunc( this, &Channel::_cmdFrameDrawFinish ), queue );
     registerCommand( fabric::CMD_CHANNEL_FRAME_ASSEMBLE,
@@ -138,8 +140,6 @@ void Channel::attach( const uint128_t& id, const uint32_t instanceID )
                      CmdFunc( this, &Channel::_cmdFrameViewFinish ), queue );
     registerCommand( fabric::CMD_CHANNEL_STOP_FRAME,
                      CmdFunc( this, &Channel::_cmdStopFrame ), commandQ );
-    registerCommand( fabric::CMD_CHANNEL_FRAME_RENDER,
-                     CmdFunc( this, &Channel::_cmdFrameRender ), queue );
     registerCommand( fabric::CMD_CHANNEL_FINISH_READBACK,
                      CmdFunc( this, &Channel::_cmdFinishReadback ), transferQ );
     registerCommand( fabric::CMD_CHANNEL_DELETE_TRANSFER_WINDOW,
@@ -1751,6 +1751,20 @@ bool Channel::_cmdFrameClear( co::ICommand& cmd )
     return true;
 }
 
+bool Channel::_cmdFrameRender( co::ICommand& cmd )
+{
+    co::ObjectICommand command( cmd );
+    RenderContext context = command.read< RenderContext >();
+    const co::ObjectVersions& frames = command.read< co::ObjectVersions >();
+    const uint128_ts& queues = command.read< uint128_ts >();
+
+    LBLOG( LOG_TASKS ) << "TASK channel frame render " << getName() <<  " "
+                       << command << " " << context << std::endl;
+
+    _frameRender( context, frames, queues );
+    return true;
+}
+
 bool Channel::_cmdFrameDrawFinish( co::ICommand& cmd )
 {
     co::ObjectICommand command( cmd );
@@ -1942,20 +1956,6 @@ bool Channel::_cmdStopFrame( co::ICommand& cmd )
                        << command << std::endl;
 
     notifyStopFrame( command.read< uint32_t >( ));
-    return true;
-}
-
-bool Channel::_cmdFrameRender( co::ICommand& cmd )
-{
-    co::ObjectICommand command( cmd );
-    RenderContext context = command.read< RenderContext >();
-    const co::ObjectVersions& frames = command.read< co::ObjectVersions >();
-    const uint128_ts& queues = command.read< uint128_ts >();
-
-    LBLOG( LOG_TASKS ) << "TASK channel frame render " << getName() <<  " "
-                       << command << " " << context << std::endl;
-
-    _frameRender( context, frames, queues );
     return true;
 }
 

@@ -530,7 +530,9 @@ protected:
      *
      * Depending on the context, invokes frameClear(), frameDraw() and/or
      * frameReadback(). This method may be overridden to break down a single
-     * rendering pass into multiple passes by "splitting up" the RenderContext.
+     * rendering pass into multiple passes by "splitting up" the
+     * RenderContext. The sole purpose for overriding this method is to call the
+     * base implementation 0-n times with a modified RenderContext.
      *
      * @param context the RenderContext used in the pass.
      * @param frames the output frames for readback.
