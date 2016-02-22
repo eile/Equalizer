@@ -373,15 +373,15 @@ std::ostream& operator << ( std::ostream& os,
 
     const Viewport& vp = channel.getViewport();
     const PixelViewport& pvp = channel.getPixelViewport();
-    if( vp.isValid( ) && channel.hasFixedViewport( ))
+    if( vp.hasArea() && channel.hasFixedViewport( ))
     {
         if( pvp.hasArea( ))
             os << "viewport " << pvp << std::endl;
         os << "viewport " << vp << std::endl;
     }
-    else if( pvp.hasArea( ))
+    else if( pvp.hasArea() && !channel.hasFixedViewport( ))
     {
-        if( vp != Viewport::FULL && vp.isValid( ))
+        if( vp.hasArea( ))
             os << "viewport " << vp << std::endl;
         os << "viewport " << pvp << std::endl;
     }

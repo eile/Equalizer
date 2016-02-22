@@ -1,6 +1,6 @@
 
 /* Copyright (c) 2007-2016, Stefan Eilemann <eile@equalizergraphics.com>
- *                           Daniel Nachbaur <danielnachbaur@gmail.com>
+ *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *                          Cedric Stalder <cedric.stalder@gmail.com>
  *                          Enrique G. Paredes <egparedes@ifi.uzh.ch>
  *
@@ -161,27 +161,11 @@ RenderContext ChannelUpdateVisitor::_setupRenderContext(
     const Channel* destChannel = compound->getInheritChannel();
     LBASSERT( destChannel );
 
-    RenderContext context;
+    RenderContext context = compound->setupRenderContext( _eye );
     context.frameID       = _frameID;
-    context.pvp           = compound->getInheritPixelViewport();
-    context.overdraw      = compound->getInheritOverdraw();
-    context.vp            = compound->getInheritViewport();
-    context.range         = compound->getInheritRange();
-    context.pixel         = compound->getInheritPixel();
-    context.subpixel      = compound->getInheritSubPixel();
-    context.zoom          = compound->getInheritZoom();
-    context.period        = compound->getInheritPeriod();
-    context.phase         = compound->getInheritPhase();
-    context.offset.x()    = context.pvp.x;
-    context.offset.y()    = context.pvp.y;
-    context.eye           = _eye;
-    context.tasks         = compound->getInheritTasks();
     context.buffer        = _getDrawBuffer( compound );
     context.bufferMask    = _getDrawBufferMask( compound );
     context.view          = destChannel->getViewVersion();
-    context.taskID        = compound->getTaskID();
-    context.finishDraw    = _channel->hasListeners(); // finish for eq stats
-    context.isLocal       = _channel == destChannel;
 
     const View* view = destChannel->getView();
     LBASSERT( context.view == co::ObjectVersion( view ));
@@ -206,7 +190,6 @@ RenderContext ChannelUpdateVisitor::_setupRenderContext(
     }
     // TODO: pvp size overcommit check?
 
-    compound->computeFrustum( context, _eye );
     return context;
 }
 

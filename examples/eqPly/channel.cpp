@@ -190,7 +190,7 @@ void Channel::frameDraw( const eq::uint128_t& frameID )
 }
 
 void Channel::frameAssemble( const eq::uint128_t& frameID,
-                             const eq::Frames& frames  )
+                             const eq::Frames& frames )
 {
     if( stopRendering( ))
         return;
@@ -217,16 +217,16 @@ void Channel::frameAssemble( const eq::uint128_t& frameID,
     // else
 
     accum.transfer = true;
-    for( eq::Frames::const_iterator i = frames.begin(); i != frames.end(); ++i )
+    for( eq::Frame* frame : frames )
     {
-        eq::Frame* frame = *i;
-        const eq::SubPixel& curSubPixel = frame->getSubPixel();
+        const eq::SubPixel& subPixel =
+            frame->getFrameData()->getContext().subPixel;
 
-        if( curSubPixel != eq::SubPixel::ALL )
+        if( subPixel != eq::SubPixel::ALL )
             accum.transfer = false;
 
-        accum.stepsDone = LB_MAX( accum.stepsDone, frame->getSubPixel().size *
-                                                   frame->getPeriod( ));
+        accum.stepsDone = LB_MAX( accum.stepsDone, subPixel.size *
+                                  frame->getFrameData()->getContext().period );
     }
 
     applyBuffer();
@@ -600,7 +600,7 @@ void Channel::_drawModel( const Model* scene )
     const eq::Matrix4f& rotation = frameData.getCameraRotation();
     const eq::Matrix4f& modelRotation = frameData.getModelRotation();
     eq::Matrix4f position = eq::Matrix4f::IDENTITY;
-    position.set_translation( frameData.getCameraPosition());
+    position.set_translation( frameData.getCameraPosition( ));
 
     const eq::Frustumf& frustum = getFrustum();
     const eq::Matrix4f projection = useOrtho() ? frustum.compute_ortho_matrix():

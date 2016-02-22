@@ -203,8 +203,8 @@ void Channel::_testFormats( float applyZoom )
             }
 
             // write
-            eq::Compositor::ImageOp op;
-            op.channel = this;
+            eq::ImageOp op;
+            op.image = image;
             op.buffers = eq::Frame::BUFFER_COLOR;
             op.offset = offset;
             op.zoom = zoom;
@@ -214,7 +214,7 @@ void Channel::_testFormats( float applyZoom )
             try
             {
                 clock.reset();
-                eq::Compositor::assembleImage( image, op );
+                eq::Compositor::assembleImage( op, this );
                 glFinish();
                 const float msec = clock.getTimef() / float( nLoops );
                 const GLenum error = glGetError(); // release mode
@@ -330,8 +330,7 @@ void Channel::_testTiledOperations()
         //---- benchmark assembly operations
         subPVP.y = pvp.y + tiles * subPVP.h;
 
-        eq::Compositor::ImageOp op;
-        op.channel = this;
+        eq::ImageOp op;
         op.buffers = eq::Frame::BUFFER_COLOR | eq::Frame::BUFFER_DEPTH;
         op.offset  = offset;
 
@@ -341,8 +340,10 @@ void Channel::_testTiledOperations()
 
         clock.reset();
         for( unsigned j = 0; j <= tiles; ++j )
-            eq::Compositor::assembleImage( images[j], op );
-
+        {
+            op.image = images[j];
+            eq::Compositor::assembleImage( op, this );
+        }
         msec = clock.getTimef();
         _sendEvent( ASSEMBLE, msec, area, formatType.str(), 0, 0 );
 
@@ -418,8 +419,7 @@ void Channel::_testDepthAssemble()
                               "depthAssemble" );
 
         // benchmark
-        eq::Compositor::ImageOp op;
-        op.channel = this;
+        eq::ImageOp op;
         op.buffers = eq::Frame::BUFFER_COLOR | eq::Frame::BUFFER_DEPTH;
         op.offset  = offset;
 
@@ -429,8 +429,10 @@ void Channel::_testDepthAssemble()
 
         clock.reset();
         for( unsigned j = 0; j <= i; ++j )
-            eq::Compositor::assembleImageDB_FF( images[j], op );
-
+        {
+            op.image = images[j];
+            eq::Compositor::assembleImageDB_FF( op, this );
+        }
         float msec = clock.getTimef();
         _sendEvent( ASSEMBLE, msec, area, formatType.str(), 0, 0 );
 
@@ -442,7 +444,10 @@ void Channel::_testDepthAssemble()
 
             clock.reset();
             for( unsigned j = 0; j <= i; ++j )
-                eq::Compositor::assembleImageDB_GLSL( images[j], op );
+            {
+                op.image = images[j];
+                eq::Compositor::assembleImageDB_GLSL( op, this );
+            }
             msec = clock.getTimef();
             _sendEvent( ASSEMBLE, msec, area, formatType.str(), 0, 0 );
         }

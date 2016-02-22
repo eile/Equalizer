@@ -27,21 +27,21 @@ namespace fabric
 
 // cppcheck-suppress uninitMemberVar
 RenderContext::RenderContext()
-        : frustum( Frustumf::DEFAULT )
-        , ortho( Frustumf::DEFAULT )
-        , headTransform( Matrix4f::IDENTITY )
-        , orthoTransform( Matrix4f::IDENTITY )
-        , frameID( 0 )
-        , overdraw( Vector4i::ZERO )
-        , offset( Vector2i::ZERO )
-        , tasks( TASK_NONE )
-        , buffer( 0x0405 ) // GL_BACK
-        , taskID( 0 )
-        , period( 1 )
-        , phase( 0 )
-        , eye( EYE_CYCLOP )
-        , finishDraw( false )
-        , isLocal( false )
+    : frustum( Frustumf::DEFAULT )
+    , ortho( Frustumf::DEFAULT )
+    , headTransform( Matrix4f::IDENTITY )
+    , orthoTransform( Matrix4f::IDENTITY )
+    , frameID( 0 )
+    , overdraw( Vector4i::ZERO )
+    , offset( Vector2i::ZERO )
+    , tasks( TASK_NONE )
+    , buffer( 0x0405 ) // GL_BACK
+    , taskID( 0 )
+    , period( 1 )
+    , phase( 0 )
+    , eye( EYE_CYCLOP )
+    , finishDraw( false )
+    , isLocal( false )
 {
 }
 
@@ -51,6 +51,11 @@ void RenderContext::apply( const Tile& tile )
     ortho = tile.ortho;
     pvp = tile.pvp;
     vp = tile.vp;
+    if( !isLocal )
+    {
+        pvp.x = 0;
+        pvp.y = 0;
+    }
 }
 
 std::ostream& operator << ( std::ostream& os, const RenderContext& ctx )

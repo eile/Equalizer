@@ -367,10 +367,10 @@ void Channel::frameReadback( const uint128_t&, const Frames& frames )
 
     util::ObjectManager&  glObjects   = getObjectManager();
     const DrawableConfig& drawable    = getDrawableConfig();
-    const PixelViewports& regions     = getRegions();
 
     for( Frame* frame : frames )
-        frame->startReadback( glObjects, drawable, regions, getContext( ));
+        frame->startReadback( glObjects, drawable, PixelViewports( 1, region ),
+                              getContext( ));
 
     EQ_GL_CALL( resetAssemblyState( ));
 }
@@ -1079,20 +1079,22 @@ void Channel::_frameRender( const RenderContext& context,
                             const co::ObjectVersions& frameIDs,
                             const uint128_ts& queueIDs )
 {
-    const Frames& frames = _getFrames( context, frameIDs, true );
-    bindDrawFrameBuffer();
-
     const int64_t startTime = getConfig()->getTime();
     _impl->framePassTimings[detail::Channel::ClearTime] = 0;
     _impl->framePassTimings[detail::Channel::DrawTime] = 0;
     _impl->framePassTimings[detail::Channel::ReadbackTime] = 0;
+
+    const Frames& frames = _getFrames( context, frameIDs, true );
     bool hasAsyncReadback = false;
+
+    bindDrawFrameBuffer();
 
     if( queueIDs.empty( ))
         hasAsyncReadback = frameRender( context, frames );
     // else
     for( const uint128_t& queueID : queueIDs )
     {
+        _overrideContext( context );
         frameTilesStart( context.frameID );
         const uint32_t timeout = getConfig()->getTimeout();
         const size_t nFrames = frames.size();
@@ -1109,13 +1111,7 @@ void Channel::_frameRender( const RenderContext& context,
             const Tile& tile = tileCmd.read< Tile >();
             RenderContext tileCtx( context );
             tileCtx.apply( tile );
-
-            const PixelViewport tilePVP = tileCtx.pvp;
-            if ( !tileCtx.isLocal )
-            {
-                tileCtx.pvp.x = 0;
-                tileCtx.pvp.y = 0;
-            }
+            _overrideContext( tileCtx );
 
             for( size_t i = 0; i < nFrames; ++i )
                 nImages[i] = frames[i]->getImages().size();
@@ -1131,7 +1127,7 @@ void Channel::_frameRender( const RenderContext& context,
                 {
                     Image* image = images[j];
                     const PixelViewport& pvp = image->getPixelViewport();
-                    image->setOffset( pvp.x + tilePVP.x, pvp.y + tilePVP.y );
+                    image->setOffset( pvp.x + tile.pvp.x, pvp.y + tile.pvp.y );
                 }
             }
         }
@@ -1437,8 +1433,7 @@ void Channel::_transmitImage( const co::ObjectVersion& frameDataVersion,
 
         if( rawSize > 0 )
             compressEvent.event.data.statistic.ratio =
-            static_cast< float >( imageDataSize ) /
-            static_cast< float >( rawSize );
+                float( imageDataSize ) / float( rawSize );
     }
 
     if( pixelDatas.empty( ))

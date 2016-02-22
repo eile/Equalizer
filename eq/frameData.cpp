@@ -408,8 +408,8 @@ Images FrameData::startReadback( const Frame& frame,
 
         pvp -= frame.getOffset();
         pvp.apply( frameZoom );
-        image->setOffset( (pvp.x - framePVP.x) * _pixel.w,
-                          (pvp.y - framePVP.y) * _pixel.h );
+        image->setOffset( (pvp.x - framePVP.x) * context.pixel.w,
+                          (pvp.y - framePVP.y) * context.pixel.h );
     }
     return images;
 }
