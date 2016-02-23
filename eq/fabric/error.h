@@ -22,7 +22,6 @@
 #include <eq/fabric/api.h>
 #include <eq/fabric/types.h>
 #include <lunchbox/bitOperation.h> // inline template specialization
-#include <co/types.h>
 
 namespace eq
 {
