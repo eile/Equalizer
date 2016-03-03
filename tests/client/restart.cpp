@@ -15,6 +15,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+// https://github.com/Eyescale/Equalizer/issues/539
+
 #include <test.h>
 #include <eq/eq.h>
 
@@ -28,7 +30,9 @@
 
 int main( const int argc, char** argv )
 {
-#ifndef Darwin
+#ifdef Darwin
+    ::setenv( "EQ_WINDOW_IATTR_HINT_DRAWABLE", "-8" /*PBuf*/, 1 /*overwrite*/ );
+#else
     ::setenv( "EQ_WINDOW_IATTR_HINT_DRAWABLE", "-12" /*FBO*/, 1 /*overwrite*/ );
 #endif
     eq::NodeFactory nodeFactory;
@@ -49,7 +53,7 @@ int main( const int argc, char** argv )
                 eq::fabric::ConfigParams configParams;
                 eq::Config* config = server->chooseConfig( configParams );
                 if( !config ) // Autoconfig failed, likely there are no GPUs
-                    return EXIT_SUCCESS;
+                    continue;
 
                 for( size_t l = 0; l < LOOPS; ++l )
                 {
@@ -58,7 +62,6 @@ int main( const int argc, char** argv )
                               " config " << k << " init " << l );
                     config->exit();
                 }
-
                 server->releaseConfig( config );
             }
             client->disconnectServer( server );
