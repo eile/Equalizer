@@ -214,10 +214,10 @@ eq::Matrix4f Channel::_computeModelView() const
         const VolumeScaling& volScaling = renderer->getVolumeScaling();
 
         eq::Matrix4f scale( eq::Matrix4f::ZERO );
-        scale.at(0,0) = volScaling.W;
-        scale.at(1,1) = volScaling.H;
-        scale.at(2,2) = volScaling.D;
-        scale.at(3,3) = 1.f;
+        scale(0,0) = volScaling.W;
+        scale(1,1) = volScaling.H;
+        scale(2,2) = volScaling.D;
+        scale(3,3) = 1.f;
 
         modelView = scale * frameData.getRotation();
     }
