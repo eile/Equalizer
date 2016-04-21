@@ -40,7 +40,6 @@
 
 #ifdef EQUALIZER
 #  include <eq/eq.h>
-#  include <vmmlib/vmmlib.hpp>
 #  define PLYLIBASSERT  LBASSERT
 #  define PLYLIBERROR   LBERROR
 #  define PLYLIBWARN    LBWARN

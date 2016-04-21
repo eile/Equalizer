@@ -3,6 +3,19 @@ Changelog {#Changelog}
 
 # git master
 
+* [554](https://github.com/Eyescale/Equalizer/pull/554):
+  Expose current view data in seq::Renderer  
+* [548](https://github.com/Eyescale/Equalizer/pull/548):
+  Sequel tweaks for seqSplotch
+
+  * configInit()/configExit() for eq::View
+  * seq::Application::createViewData receives eq::View as parameter
+  * seq::Renderer::createViewData receives eq::View as parameter
+  * seq::ViewData considers eq::View::getModelUnit for model matrix manipulation
+
+
+# Release 1.11 (21-Mar-2016)
+
 * [542](https://github.com/Eyescale/Equalizer/pull/542):
   Fix missing/wrong handling of key events from Deflect host
 * [538](https://github.com/Eyescale/Equalizer/pull/538):

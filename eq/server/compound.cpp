@@ -759,7 +759,8 @@ const Matrix4f& Compound::_getInverseHeadMatrix() const
     if( observer )
         return observer->getInverseHeadMatrix();
 
-    return Matrix4f::IDENTITY;
+    static const Matrix4f identity;
+    return identity;
 }
 
 void Compound::_computeFrustumCorners( Frustumf& frustum,

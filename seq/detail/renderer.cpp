@@ -79,6 +79,11 @@ ObjectManager& Renderer::getObjectManager()
     return _window->getObjectManager();
 }
 
+const ViewData* Renderer::getViewData() const
+{
+    return _channel->getViewData();
+}
+
 const Frustumf& Renderer::getFrustum() const
 {
     LBASSERT( _channel );
@@ -89,13 +94,15 @@ const Frustumf& Renderer::getFrustum() const
 const Matrix4f& Renderer::getViewMatrix() const
 {
     LBASSERT( _channel );
-    return _channel ? _channel->getViewMatrix() : Matrix4f::IDENTITY;
+    static const Matrix4f identity;
+    return _channel ? _channel->getViewMatrix() : identity;
 }
 
 const Matrix4f& Renderer::getModelMatrix() const
 {
     LBASSERT( _channel );
-    return _channel ? _channel->getModelMatrix() : Matrix4f::IDENTITY;
+    static const Matrix4f identity;
+    return _channel ? _channel->getModelMatrix() : identity;
 }
 
 const PixelViewport& Renderer::getPixelViewport() const
