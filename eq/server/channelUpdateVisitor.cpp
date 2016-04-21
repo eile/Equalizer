@@ -135,9 +135,7 @@ VisitorResult ChannelUpdateVisitor::visitLeaf( const Compound* compound )
     const RenderContext& context = _setupRenderContext( compound );
     _updateFrameRate( compound );
     _updateViewStart( compound, context );
-    _updateDraw( compound, context );
-    _updateDrawFinish( compound );
-    _updateAssemble( compound, context );
+    _updateRender( compound, context );
     _updateViewFinish( compound, context );
     return TRAVERSE_CONTINUE;
 }
@@ -190,6 +188,7 @@ RenderContext ChannelUpdateVisitor::_setupRenderContext(
     }
     // TODO: pvp size overcommit check?
 
+    _setupDrawFinishTasks( compound, context );
     return context;
 }
 
@@ -216,25 +215,29 @@ uint128_ts ChannelUpdateVisitor::_selectQueues(
     return queues;
 }
 
-void ChannelUpdateVisitor::_updateDraw( const Compound* compound,
+void ChannelUpdateVisitor::_updateRender( const Compound* compound,
                                         const RenderContext& context )
 {
     if( !(context.tasks & fabric::TASK_RENDER) )
         return;
 
-    const co::ObjectVersions& frames =
+    const co::ObjectVersions& inFrames =
+        (context.tasks & fabric::TASK_ASSEMBLE) ?
+            _selectFrames( compound->getInputFrames( )) : co::ObjectVersions();
+    const co::ObjectVersions& outFrames =
         (context.tasks & fabric::TASK_READBACK) ?
             _selectFrames( compound->getOutputFrames( )) : co::ObjectVersions();
     const uint128_ts& queues = _selectQueues( compound, context );
 
     _channel->send( fabric::CMD_CHANNEL_FRAME_RENDER )
-        << context << frames << queues;
+        << context << inFrames << outFrames << queues;
     _updated = true;
     LBLOG( LOG_TASKS ) << "TASK render " << _channel->getName() <<  " "
                        << std::endl;
 }
 
-void ChannelUpdateVisitor::_updateDrawFinish( const Compound* compound ) const
+void ChannelUpdateVisitor::_setupDrawFinishTasks( const Compound* compound,
+                                                  RenderContext& context ) const
 {
     const Compound* lastDrawCompound = _channel->getLastDrawCompound();
     if( lastDrawCompound && lastDrawCompound != compound )
@@ -248,28 +251,16 @@ void ChannelUpdateVisitor::_updateDrawFinish( const Compound* compound ) const
         _channel->setLastDrawCompound( compound );
 
     // Channel::frameDrawFinish
-    Node* node = _channel->getNode();
-
-    node->send( fabric::CMD_CHANNEL_FRAME_DRAW_FINISH, _channel->getID( ))
-            << _frameID << _frameNumber;
-    LBLOG( LOG_TASKS ) << "TASK channel draw finish " << _channel->getName()
-                       << " frame " << _frameNumber
-                       << " id " << _frameID << std::endl;
+    context.tasks |= fabric::TASK_CHANNEL_DRAW_FINISH;
 
     // Window::frameDrawFinish
     Window* window = _channel->getWindow();
     const Channel* lastDrawChannel = window->getLastDrawChannel();
-
     if( lastDrawChannel && lastDrawChannel != _channel )
         return;
 
     window->setLastDrawChannel( _channel ); // in case not set
-
-    node->send( fabric::CMD_WINDOW_FRAME_DRAW_FINISH, window->getID( ))
-            << _frameID << _frameNumber;
-    LBLOG( LOG_TASKS ) << "TASK window draw finish "  << window->getName()
-                           <<  " frame " << _frameNumber
-                           << " id " << _frameID << std::endl;
+    context.tasks |= fabric::TASK_WINDOW_DRAW_FINISH;
 
     // Pipe::frameDrawFinish
     Pipe* pipe = _channel->getPipe();
@@ -278,24 +269,60 @@ void ChannelUpdateVisitor::_updateDrawFinish( const Compound* compound ) const
         return;
 
     pipe->setLastDrawWindow( window ); // in case not set
-
-    node->send( fabric::CMD_PIPE_FRAME_DRAW_FINISH, pipe->getID( ))
-            << _frameID << _frameNumber;
-    LBLOG( LOG_TASKS ) << "TASK pipe draw finish " << pipe->getName()
-                       << " frame " << _frameNumber
-                       << " id " << _frameID << std::endl;
+    context.tasks |= fabric::TASK_PIPE_DRAW_FINISH;
 
     // Node::frameDrawFinish
+    Node* node = _channel->getNode();
     const Pipe* lastDrawPipe = node->getLastDrawPipe();
     if( lastDrawPipe && lastDrawPipe != pipe )
         return;
 
     node->setLastDrawPipe( pipe ); // in case not set
+    context.tasks |= fabric::TASK_NODE_DRAW_FINISH;
+}
 
-    node->send( fabric::CMD_NODE_FRAME_DRAW_FINISH, node->getID( ))
+void ChannelUpdateVisitor::_updateDrawFinish( const Compound* compound ) const
+{
+    Node* node = _channel->getNode();
+    RenderContext context;
+    _setupDrawFinishTasks( compound, context );
+
+    if( context.tasks & fabric::TASK_CHANNEL_DRAW_FINISH )
+    {
+        node->send( fabric::CMD_CHANNEL_FRAME_DRAW_FINISH, _channel->getID( ))
             << _frameID << _frameNumber;
-    LBLOG( LOG_TASKS ) << "TASK node draw finish " << node->getName() <<  " "
-                       << std::endl;
+        LBLOG( LOG_TASKS ) << "TASK channel draw finish " << _channel->getName()
+                           << " frame " << _frameNumber
+                           << " id " << _frameID << std::endl;
+    }
+
+    if( context.tasks & fabric::TASK_WINDOW_DRAW_FINISH )
+    {
+        const Window* window = _channel->getWindow();
+        node->send( fabric::CMD_WINDOW_FRAME_DRAW_FINISH, window->getID( ))
+            << _frameID << _frameNumber;
+        LBLOG( LOG_TASKS ) << "TASK window draw finish "  << window->getName()
+                           <<  " frame " << _frameNumber
+                           << " id " << _frameID << std::endl;
+    }
+
+    if( context.tasks & fabric::TASK_PIPE_DRAW_FINISH )
+    {
+        const Pipe* pipe = _channel->getPipe();
+        node->send( fabric::CMD_PIPE_FRAME_DRAW_FINISH, pipe->getID( ))
+            << _frameID << _frameNumber;
+        LBLOG( LOG_TASKS ) << "TASK pipe draw finish " << pipe->getName()
+                           << " frame " << _frameNumber
+                           << " id " << _frameID << std::endl;
+    }
+
+    if( context.tasks & fabric::TASK_NODE_DRAW_FINISH )
+    {
+        node->send( fabric::CMD_NODE_FRAME_DRAW_FINISH, node->getID( ))
+            << _frameID << _frameNumber;
+        LBLOG( LOG_TASKS ) << "TASK node draw finish " << node->getName()
+                           <<  " " << std::endl;
+    }
 }
 
 void ChannelUpdateVisitor::_sendClear( const RenderContext& context )

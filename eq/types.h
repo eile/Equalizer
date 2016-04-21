@@ -65,6 +65,7 @@ struct ImageOp;
 struct PixelData;
 
 using namespace fabric::eventEnums;
+using namespace fabric::taskEnums;
 
 using fabric::ANAGLYPH;
 using fabric::ASYNC;

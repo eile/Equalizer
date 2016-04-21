@@ -58,7 +58,7 @@ private:
     bool _skipCompound( const Compound* compound );
     void _sendClear( const RenderContext& context );
 
-    void _updateDraw( const Compound* compound, const RenderContext& context );
+    void _updateRender( const Compound*, const RenderContext& );
     void _updateDrawFinish( const Compound* compound ) const;
     void _updateFrameRate( const Compound* compound ) const;
 
@@ -70,6 +70,7 @@ private:
                               const RenderContext& context ) const;
 
     RenderContext _setupRenderContext( const Compound* compound );
+    void _setupDrawFinishTasks( const Compound*, RenderContext& ) const;
 
     void _updateAssemble( const Compound* compound,
                           const fabric::RenderContext& context );

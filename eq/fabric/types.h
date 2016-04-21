@@ -23,6 +23,7 @@
 #include <eq/fabric/api.h>
 #include <eq/fabric/errorCodes.h>
 #include <eq/fabric/eventEnums.h>
+#include <eq/fabric/task.h>
 #include <co/types.h>
 #include <lunchbox/refPtr.h>
 #include <lunchbox/uint128_t.h>
@@ -41,6 +42,7 @@ namespace eq
 namespace fabric
 {
 using namespace eventEnums;
+using namespace taskEnums;
 class Client;
 class ColorMask;
 class ConfigParams;

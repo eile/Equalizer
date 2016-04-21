@@ -133,7 +133,7 @@ public:
     /** A random, unique color for this channel. */
     Vector3ub color;
 
-    enum { ClearTime=0, DrawTime, ReadbackTime, _TimesCount };
+    enum { ClearTime=0, DrawTime, AssembleTime, ReadbackTime, _TimesCount };
     int64_t framePassTimings[_TimesCount];
 
     typedef std::vector< Statistic > Statistics;
