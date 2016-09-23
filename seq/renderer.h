@@ -108,6 +108,9 @@ public:
      */
     virtual void draw( co::Object* frameData ) = 0;
 
+    /** Request another call to draw(). @version 1.12 */
+    SEQ_API void requestRedraw();
+
     /**
      * Update the near and far planes to tightly enclose the given sphere.
      *
@@ -138,6 +141,13 @@ public:
      * @version 1.0
      */
     SEQ_API virtual void applyRenderContext();
+
+    /**
+     * Bind the window draw buffer, which can be (multisampled) FBO or window
+     * buffer.
+     * @version 1.12
+     */
+    SEQ_API void bindDrawFrameBuffer();
 
     /** @return the current rendering parameters. @version 1.4 */
     SEQ_API const RenderContext& getRenderContext() const;

@@ -226,8 +226,8 @@ bool Resources::discover( ServerPtr server, Config* config,
             return false;
         }
         LBINFO << "No resources found for session " << session
-               << ", using default config" << std::endl;
-        gpuInfos.push_back( hwsd::GPUInfo( ));
+               << ", aborting" << std::endl;
+        return false;
     }
 
     typedef stde::hash_map< uint128_t, Node* > NodeMap;
@@ -244,9 +244,8 @@ bool Resources::discover( ServerPtr server, Config* config,
 
     std::string excludedDisplays; // for VGL_EXCLUDE
 
-    for( hwsd::GPUInfosCIter i = gpuInfos.begin(); i != gpuInfos.end(); ++i )
+    for( const hwsd::GPUInfo& info : gpuInfos )
     {
-        const hwsd::GPUInfo& info = *i;
         if( info.flags & hwsd::GPUInfo::FLAG_VIRTUALGL_DISPLAY )
             continue; // ignore, default $DISPLAY gpu uses this one
 

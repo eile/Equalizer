@@ -577,7 +577,7 @@ void Compound::updateFrustum( const Vector3f& eye, const float ratio )
         wall.apply( coverage );
         wall.moveFocus( eye, ratio );
         _updateOverdraw( wall );
-        wall.scale( view->getModelUnit() );
+        wall.scale( view->getModelUnit( ));
 
         switch( view->getCurrentType( ))
         {
@@ -618,7 +618,7 @@ void Compound::updateFrustum( const Vector3f& eye, const float ratio )
     wall.moveFocus( eye, ratio );
     wall.apply( coverage );
     _updateOverdraw( wall );
-    wall.scale( view->getModelUnit() );
+    wall.scale( view->getModelUnit( ));
 
     switch( segment->getCurrentType( ))
     {
@@ -726,13 +726,13 @@ Vector3f Compound::_getEyePosition( const Eye eye ) const
     const Channel* destChannel = getInheritChannel();
     const View* view = destChannel->getView();
     const Observer* observer = view ? view->getObserver() : 0;
+    const float modelUnit = view ? view->getModelUnit() : 1.f;
 
     if( observer )
-        return view->getModelUnit() *
+        return modelUnit *
             ( frustumData.getType() == Wall::TYPE_FIXED ?
                 observer->getEyeWorld( eye ) : observer->getEyePosition( eye ));
 
-    const float modelUnit = view ? view->getModelUnit() : 1.f;
     const float eyeBase_2 = 0.5f * modelUnit *
                            getConfig()->getFAttribute( Config::FATTR_EYE_BASE );
     switch( eye )

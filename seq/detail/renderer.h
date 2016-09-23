@@ -68,9 +68,11 @@ public:
     bool exitContext();
 
     void clear();
+    void requestRedraw();
 
     void applyRenderContext();
     void applyModelMatrix();
+    void bindDrawFrameBuffer();
 
     void applyScreenFrustum();
     void applyPerspectiveFrustum();

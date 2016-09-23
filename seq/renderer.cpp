@@ -114,6 +114,11 @@ void Renderer::clear( co::Object* /*frameData*/ )
     _impl->clear();
 }
 
+void Renderer::requestRedraw()
+{
+    _impl->requestRedraw();
+}
+
 void Renderer::updateNearFar( const Vector4f& boundingSphere )
 {
     const Matrix4f& view = getViewMatrix();
@@ -161,6 +166,11 @@ void Renderer::setNearFar( const float nearPlane, const float farPlane )
 void Renderer::applyRenderContext()
 {
     _impl->applyRenderContext();
+}
+
+void Renderer::bindDrawFrameBuffer()
+{
+    _impl->bindDrawFrameBuffer();
 }
 
 const RenderContext& Renderer::getRenderContext() const
