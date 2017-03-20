@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2005-2016, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2005-2017, Stefan Eilemann <eile@equalizergraphics.com>
  *                          Cedric Stalder <cedric Stalder@gmail.com>
  *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *
@@ -42,8 +42,7 @@
 
 #include <co/objectICommand.h>
 
-#include <lunchbox/sleep.h>
-#include <boost/foreach.hpp>
+#include <extra/sleep.h>
 
 #include "channelStopFrameVisitor.h"
 #include "configDeregistrator.h"
@@ -583,7 +582,7 @@ bool Config::_updateRunning( const bool canFail )
 bool Config::_connectNodes()
 {
     bool success = true;
-    lunchbox::Clock clock;
+    extra::Clock clock;
     const Nodes& nodes = getNodes();
     for( Nodes::const_iterator i = nodes.begin(); i != nodes.end(); ++i )
     {
@@ -612,7 +611,7 @@ void Config::_startNodes()
     const Nodes& nodes = getNodes();
     requests.reserve( nodes.size( ));
 
-    BOOST_FOREACH( Node* node, nodes )
+    for( Node* node : nodes )
     {
         if( node->isActive() && node->isStopped( ))
         {
@@ -683,7 +682,7 @@ void Config::_stopNodes()
 
         if( nSleeps )
             while( netNode->isConnected() && --nSleeps )
-                lunchbox::sleep( 100 ); // ms
+                extra::sleep( 100 ); // ms
 
         if( netNode->isConnected( ))
         {

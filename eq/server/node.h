@@ -109,7 +109,7 @@ public:
     bool launch();
 
     /** Synchronize the connection of a render slave launch. */
-    bool syncLaunch( const lunchbox::Clock& time );
+    bool syncLaunch( const extra::Clock& time );
 
     /** Start initializing this entity. */
     void configInit( const uint128_t& initID, const uint32_t frameNumber );

@@ -20,7 +20,7 @@
 
 #include <seq/seq.h>
 
-#include <lunchbox/clock.h>
+#include <extra/Clock.h>
 
 #include <stdlib.h>
 
@@ -61,7 +61,7 @@ int main( const int argc, char** argv )
     setenv( "EQ_CONFIG_IATTR_ROBUSTNESS", "0", 1 /* overwrite */ );
     setenv( "CO_TIMEOUT", "1000", 1 /* overwrite */ );
     ApplicationPtr app = new Application;
-    lunchbox::Clock clock;
+    extra::Clock clock;
 
     if( !app->init( argc, argv, 0 ))
     {

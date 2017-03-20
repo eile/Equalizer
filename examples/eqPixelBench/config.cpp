@@ -1,6 +1,6 @@
 
-/* Copyright (c) 2007-2013, Stefan Eilemann <eile@equalizergraphics.com>
- *                    2012, Daniel Nachbaur <danielnachbaur@gmail.com>
+/* Copyright (c) 2007-2017, Stefan Eilemann <eile@equalizergraphics.com>
+ *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,22 +35,16 @@ namespace eqPixelBench
 {
 Config::Config( eq::ServerPtr parent )
         : eq::Config( parent )
-        , _clock(0)
 {
 }
 
 Config::~Config()
 {
-    delete _clock;
-    _clock = 0;
 }
 
 uint32_t Config::startFrame( const eq::uint128_t& frameID )
 {
-    if( !_clock )
-        _clock = new lunchbox::Clock;
-
-    _clock->reset();
+    _clock.reset();
     return eq::Config::startFrame( frameID );
 }
 

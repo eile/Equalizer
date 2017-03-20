@@ -1,5 +1,5 @@
 
-# Copyright (c) 2010-2016 Stefan Eilemann <eile@eyescale.ch>
+# Copyright (c) 2010-2017 Stefan Eilemann <eile@eyescale.ch>
 #                         Daniel Pfeifer <daniel@pfeifer-mail.de>
 
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
@@ -57,6 +57,7 @@ common_find_package(Boost REQUIRED COMPONENTS
 common_find_package(BISON REQUIRED)
 common_find_package(Collage REQUIRED)
 common_find_package(Deflect)
+common_find_package(Extra REQUIRED)
 common_find_package(FLEX REQUIRED)
 common_find_package(GLStats)
 common_find_package(hwloc)

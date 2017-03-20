@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2005-2016, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2005-2017, Stefan Eilemann <eile@equalizergraphics.com>
  *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *                          Cedric Stalder <cedric.stalder@gmail.com>
  *
@@ -37,9 +37,8 @@
 #include <co/global.h>
 #include <co/objectICommand.h>
 
-#include <lunchbox/clock.h>
+#include <extra/Clock.h>
 #include <lunchbox/os.h>
-#include <lunchbox/sleep.h>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
@@ -289,7 +288,7 @@ bool Node::connect()
     return false;
 }
 
-bool Node::syncLaunch( const lunchbox::Clock& clock )
+bool Node::syncLaunch( const extra::Clock& clock )
 {
     LBASSERT( isActive( ));
 

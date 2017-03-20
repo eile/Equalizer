@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2005-2010, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2005-2017, Stefan Eilemann <eile@equalizergraphics.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,6 +31,7 @@
 #include "config.h"
 #include "localInitData.h"
 
+#include <extra/clock.h>
 #include <stdlib.h>
 
 namespace eVolve
@@ -86,7 +87,7 @@ int EVolve::run()
     }
 
     // 3. init config
-    lunchbox::Clock clock;
+    extra::Clock clock;
 
     config->setInitData( _initData );
     if( !config->init( ))

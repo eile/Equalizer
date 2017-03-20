@@ -1,6 +1,6 @@
 
-/* Copyright (c) 2007-2013, Stefan Eilemann <eile@equalizergraphics.com>
- *                    2012, Daniel Nachbaur <danielnachbaur@gmail.com>
+/* Copyright (c) 2007-2017, Stefan Eilemann <eile@equalizergraphics.com>
+ *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,6 +31,7 @@
 #define EQ_PIXELBENCH_CONFIG_H
 
 #include <eq/eq.h>
+#include <extra/Clock.h>
 
 /** The Equalizer Pixel Transfer Benchmark Utility */
 namespace eqPixelBench
@@ -47,13 +48,13 @@ public:
     virtual bool handleEvent( eq::EventICommand command );
 
     /** @return the clock started by startFrame, or 0 on render clients. */
-    const lunchbox::Clock* getClock() const { return _clock; }
+    const extra::Clock& getClock() const { return _clock; }
 
 protected:
     virtual ~Config();
 
 private:
-    lunchbox::Clock* _clock;
+    extra::Clock _clock;
 };
 }
 

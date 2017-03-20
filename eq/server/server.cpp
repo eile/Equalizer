@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2005-2016, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2005-2017, Stefan Eilemann <eile@equalizergraphics.com>
  *                          Cedric Stalder <cedric.stalder@gmail.com>
  *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *
@@ -41,7 +41,7 @@
 #include <co/init.h>
 #include <co/localNode.h>
 #include <lunchbox/refPtr.h>
-#include <lunchbox/sleep.h>
+#include <extra/sleep.h>
 
 #include <sstream>
 
@@ -353,7 +353,7 @@ bool Server::_cmdShutdown( co::ICommand& command )
 
 #ifndef WIN32
     // WAR for 2874188: Lockup at shutdown
-    lunchbox::sleep( 100 );
+    extra::sleep( 100 );
 #endif
 
     return true;

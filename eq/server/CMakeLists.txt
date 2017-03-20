@@ -138,7 +138,7 @@ else()
   list(APPEND EQUALIZERSERVER_HEADERS ${PUBLIC_HEADERS})
 endif()
 
-set(EQUALIZERSERVER_LINK_LIBRARIES PUBLIC EqualizerFabric)
+set(EQUALIZERSERVER_LINK_LIBRARIES PUBLIC EqualizerFabric Extra)
 if(HWSD_FOUND)
   list(APPEND EQUALIZERSERVER_HEADERS
     config/display.h config/resources.h config/server.h)

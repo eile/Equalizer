@@ -56,7 +56,7 @@ int main( const int argc, char** argv )
         TEST( config->init( co::uint128_t( )));
 
         size_t nLoops = 0;
-        const lunchbox::Clock clock;
+        const extra::Clock clock;
         while( clock.getTime64() < LOOPTIME )
         {
             TEST( config->update( ));

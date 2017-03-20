@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2007-2015, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2007-2017, Stefan Eilemann <eile@equalizergraphics.com>
  *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *
  * This library is free software; you can redistribute it and/or modify it under
@@ -21,13 +21,13 @@
 #include "messagePump.h"
 
 #include <co/iCommand.h>
-#include <lunchbox/clock.h>
+#include <extra/clock.h>
 
 namespace eq
 {
 namespace
 {
-static lunchbox::Clock _clock;
+static extra::Clock _clock;
 }
 
 CommandQueue::CommandQueue( const size_t maxSize )

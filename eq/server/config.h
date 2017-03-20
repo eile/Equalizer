@@ -265,7 +265,7 @@ private:
     void _updateCanvases();
     bool _connectNodes();
     bool _connectNode( Node* node );
-    bool _syncConnectNode( Node* node, const lunchbox::Clock& clock );
+    bool _syncConnectNode( Node* node, const extra::Clock& clock );
     void _startNodes();
     lunchbox::Request< void > _createConfig( Node* node );
     bool _updateNodes( const bool canFail );

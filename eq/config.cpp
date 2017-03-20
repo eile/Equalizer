@@ -48,7 +48,7 @@
 #include <co/connectionDescription.h>
 #include <co/global.h>
 
-#include <lunchbox/clock.h>
+#include <extra/Clock.h>
 #include <lunchbox/monitor.h>
 #include <lunchbox/scopedMutex.h>
 #include <lunchbox/spinLock.h>
@@ -153,7 +153,7 @@ public:
     lunchbox::Monitor< uint32_t > finishedFrame;
 
     /** The global clock. */
-    lunchbox::Clock clock;
+    extra::Clock clock;
 
     std::deque< int64_t > frameTimes; //!< Start time of last frames
 

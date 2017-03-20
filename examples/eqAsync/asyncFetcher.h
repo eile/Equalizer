@@ -1,6 +1,6 @@
 
-/* Copyright (c) 2009-2011, Maxim Makhinya <maxmah@gmail.com>
- *                    2012, Stefan Eilemann <eile@eyescale.ch>
+/* Copyright (c) 2009-2017, Maxim Makhinya <maxmah@gmail.com>
+ *                          Stefan Eilemann <eile@eyescale.ch>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,6 +32,7 @@
 #define EQASYNC_ASYNC_FETCHER_H
 
 #include <eq/eq.h>
+#include <extra/MTQueue.h>
 
 namespace eqAsync
 {
@@ -62,7 +63,6 @@ public:
     void setup( Window* window );
     void stop();
 
-//    TextureId getTextureId()               { return _outQueue.pop().id;      }
     bool tryGetTextureId( TextureId& val ) { return _outQueue.tryPop( val ); }
     void deleteTexture( const void* key )  { _inQueue.push( key );           }
 
@@ -71,9 +71,9 @@ protected:
     const GLEWContext* glewGetContext() const;
 
 private:
-    lunchbox::MTQueue<const void*> _inQueue;       // textures to delete
-    lunchbox::MTQueue<TextureId>   _outQueue;      // generated textures
-    eq::SystemWindow*              _sharedWindow;
+    extra::MTQueue<const void*> _inQueue;       // textures to delete
+    extra::MTQueue<TextureId>   _outQueue;      // generated textures
+    eq::SystemWindow* _sharedWindow;
 };
 
 }

@@ -1,6 +1,6 @@
 
-/* Copyright (c) 2005-2014, Stefan Eilemann <eile@equalizergraphics.com>
- *                    2010, Daniel Nachbaur <danielnachbaur@gmail.com>
+/* Copyright (c) 2005-2017, Stefan Eilemann <eile@equalizergraphics.com>
+ *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published
@@ -26,7 +26,8 @@
 #include <eq/fabric/server.h>    // base class
 #include <co/commandQueue.h>  // member
 #include <co/localNode.h>     // base class
-#include <lunchbox/clock.h>   // member
+
+#include <extra/Clock.h>   // member
 
 namespace eq
 {
@@ -73,7 +74,7 @@ private:
     co::CommandQueue _mainThreadQueue;
 
     /** The global clock. */
-    lunchbox::Clock _clock;
+    extra::Clock _clock;
 
     co::Nodes _admins; //!< connected admin clients
 

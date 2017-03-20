@@ -48,7 +48,8 @@
 #include <co/barrier.h>
 #include <co/exception.h>
 #include <co/objectICommand.h>
-#include <lunchbox/sleep.h>
+
+#include <extra/sleep.h>
 
 namespace eq
 {
@@ -1002,7 +1003,7 @@ bool  Window::_cmdThrottleFramerate( co::ICommand& cmd )
     if( timeLeft >= 1.f )
     {
         WindowStatistics stat( Statistic::WINDOW_THROTTLE_FRAMERATE, this );
-        lunchbox::sleep( static_cast< uint32_t >( timeLeft ));
+        extra::sleep( static_cast< uint32_t >( timeLeft ));
     }
 
     _lastSwapTime = getConfig()->getTime();
