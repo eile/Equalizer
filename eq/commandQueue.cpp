@@ -21,7 +21,7 @@
 #include "messagePump.h"
 
 #include <co/iCommand.h>
-#include <extra/clock.h>
+#include <extra/Clock.h>
 
 namespace eq
 {
